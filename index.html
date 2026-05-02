@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pix2Prints</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0c0f;
+  --surface: #16161a;
+  --surface2: #1f1f26;
+  --border: #2a2a35;
+  --border2: #3a3a48;
+  --accent: #c8f135;
+  --accent2: #7c6cff;
+  --text: #efefef;
+  --muted: #7a7a8a;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════
+   TOPBAR
+   ══════════════════════════════ */
+#topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.brand-logo svg { display: block; }
+.brand-text { display: flex; flex-direction: column; gap: 1px; }
+.brand-company {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.brand-product {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px; font-weight: 800;
+  letter-spacing: -0.5px; color: var(--text);
+  line-height: 1;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.badge {
+  font-size: 10px; color: var(--muted);
+  border: 1px solid var(--border2); padding: 3px 8px; border-radius: 20px;
+  letter-spacing: 0.04em;
+}
+.badge.accent { color: var(--accent); border-color: var(--accent); }
+
+/* ══════════════════════════════
+   HERO
+   ══════════════════════════════ */
+#hero {
+  padding: 32px 16px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+#hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -80px;
+  width: 260px; height: 260px;
+  background: radial-gradient(circle, rgba(200,241,53,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+#hero::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(124,108,255,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-label {
+  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.hero-label::before {
+  content: '';
+  width: 20px; height: 1px; background: var(--accent);
+}
+
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px; font-weight: 800;
+  letter-spacing: -1px; line-height: 1.05;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.hero-title span { color: var(--accent); }
+
+.hero-desc {
+  font-size: 12px; color: var(--muted); line-height: 1.7;
+  max-width: 340px;
+}
+
+/* ══════════════════════════════
+   SECTION HEADER
+   ══════════════════════════════ */
+.section-header {
+  padding: 20px 16px 14px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted);
+}
+.section-count {
+  font-size: 10px; color: var(--muted);
+  border: 1px solid var(--border2); padding: 2px 8px; border-radius: 20px;
+}
+
+/* ══════════════════════════════
+   FILTER BAR
+   ══════════════════════════════ */
+#filter-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+#filter-bar::-webkit-scrollbar { display: none; }
+
+.filter-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border2);
+  background: transparent; color: var(--muted);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.filter-btn:hover { color: var(--text); border-color: var(--border2); }
+.filter-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(200,241,53,0.06); }
+
+/* ══════════════════════════════
+   PRODUCT GRID
+   ══════════════════════════════ */
+#products {
+  padding: 12px 12px 100px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── Product Card ── */
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+  color: inherit;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.product-card:hover, .product-card:active {
+  border-color: var(--border2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+.product-card.featured {
+  grid-column: span 2;
+  flex-direction: row;
+}
+
+/* Card preview area */
+.card-preview {
+  aspect-ratio: 1;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.product-card.featured .card-preview {
+  width: 140px; aspect-ratio: auto; height: 100%;
+  min-height: 120px;
+}
+
+/* corner marks on preview */
+.card-preview::before, .card-preview::after {
+  content: ''; position: absolute;
+  width: 10px; height: 10px;
+  border-color: rgba(200,241,53,0.25); border-style: solid;
+}
+.card-preview::before { top: 6px; left: 6px; border-width: 1.5px 0 0 1.5px; }
+.card-preview::after  { bottom: 6px; right: 6px; border-width: 0 1.5px 1.5px 0; }
+
+/* SVG shape in preview */
+.shape-wrap {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+}
+.shape-wrap svg { max-width: 70%; max-height: 70%; }
+
+/* Card tag (new / popular) */
+.card-tag {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 9px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em;
+  padding: 2px 7px; border-radius: 20px; text-transform: uppercase;
+}
+.card-tag.new { background: rgba(200,241,53,0.12); color: var(--accent); border: 1px solid rgba(200,241,53,0.25); }
+.card-tag.popular { background: rgba(124,108,255,0.12); color: var(--accent2); border: 1px solid rgba(124,108,255,0.25); }
+
+/* Card info */
+.card-info {
+  padding: 11px 12px 12px;
+  flex: 1; display: flex; flex-direction: column; gap: 4px;
+}
+.card-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--text); line-height: 1.2;
+}
+.card-sub {
+  font-size: 10px; color: var(--muted);
+}
+.card-size {
+  margin-top: 6px;
+  font-size: 10px; color: var(--accent);
+  display: flex; align-items: center; gap: 5px;
+}
+.card-size::before { content: '⌀'; opacity: 0.6; }
+
+.card-size-rect {
+  margin-top: 6px;
+  font-size: 10px; color: var(--accent);
+  display: flex; align-items: center; gap: 5px;
+}
+.card-size-rect::before { content: '▯'; opacity: 0.6; }
+
+.card-arrow {
+  position: absolute; bottom: 10px; right: 10px;
+  width: 22px; height: 22px;
+  border-radius: 50%; background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+.product-card:hover .card-arrow { background: var(--accent); }
+.product-card:hover .card-arrow svg { color: #0c0c0f; }
+
+/* Featured special info */
+.product-card.featured .card-info { justify-content: center; }
+.product-card.featured .card-name { font-size: 15px; }
+
+
+/* ══════════════════════════════
+   MARQUEE
+   ══════════════════════════════ */
+.marquee-wrap {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+  background: var(--surface);
+  margin-bottom: 0;
+}
+.marquee-track {
+  display: flex; gap: 0; white-space: nowrap;
+  animation: marquee 18s linear infinite;
+}
+.marquee-item {
+  font-size: 10px; color: var(--muted); letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 0 18px;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.marquee-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--accent); opacity: 0.5; }
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ══════════════════════════════
+   MAX WIDTH WRAPPER
+   ══════════════════════════════ */
+.page-wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ══════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.product-card {
+  animation: fadeUp 0.4s ease both;
+}
+.product-card:nth-child(1) { animation-delay: 0.05s; }
+.product-card:nth-child(2) { animation-delay: 0.10s; }
+.product-card:nth-child(3) { animation-delay: 0.15s; }
+.product-card:nth-child(4) { animation-delay: 0.20s; }
+.product-card:nth-child(5) { animation-delay: 0.25s; }
+.product-card:nth-child(6) { animation-delay: 0.30s; }
+.product-card:nth-child(7) { animation-delay: 0.35s; }
+.product-card:nth-child(8) { animation-delay: 0.40s; }
+
+/* Noise texture overlay on hero */
+#hero-noise {
+  position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 120px;
+}
+#hero > * { position: relative; z-index: 2; }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ── Top branding bar ── -->
+  <div id="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <rect x="1" y="1" width="16" height="16" rx="3" stroke="#0c0c0f" stroke-width="1.5"/>
+          <rect x="4.5" y="4.5" width="9" height="9" rx="1.5" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="4.5" y1="1" x2="4.5" y2="4.5" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="13.5" y1="1" x2="13.5" y2="4.5" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="4.5" y1="13.5" x2="4.5" y2="17" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="13.5" y1="13.5" x2="13.5" y2="17" stroke="#0c0c0f" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-product">Pix2Prints</span>
+        <span class="brand-company">Customized fridge magnets</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge accent">Home Page</span>
+    </div>
+  </div>
+
+  <!-- ── Hero ── -->
+  <div id="hero">
+    <div id="hero-noise"></div>
+    <div class="hero-label">Welcome to Pix2Prints</div>
+    <h1 class="hero-title">Turn photos into<br><span>Memories.</span></h1>
+    <p class="hero-desc">Upload any photo and we'll print it on premium magnets, keychains, acrylics & more. Shipped fast, built to last.</p>
+  </div>
+
+  <!-- ── Marquee ── -->
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <!-- repeated twice for seamless loop -->
+      <span class="marquee-item">Round Magnets <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Acrylic Keychains <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Polaroids <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Square Badges <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Mirror &amp; Opener <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Round Keychains <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Acrylic Magnets <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Photo Gifts <span class="marquee-dot"></span></span>
+      <!-- duplicate -->
+      <span class="marquee-item">Round Magnets <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Acrylic Keychains <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Polaroids <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Square Badges <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Mirror &amp; Opener <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Round Keychains <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Acrylic Magnets <span class="marquee-dot"></span></span>
+      <span class="marquee-item">Photo Gifts <span class="marquee-dot"></span></span>
+    </div>
+  </div>
+
+  <!-- ── Section header ── -->
+  <div class="section-header">
+    <span class="section-title">All Products</span>
+    <!-- <span class="section-count">8 items</span> -->
+  </div>
+
+  <!-- ── Filter bar ── -->
+  <div id="filter-bar">
+    <button class="filter-btn active" onclick="filterProducts('all', this)">All</button>
+    <button class="filter-btn" onclick="filterProducts('magnet', this)">Magnets</button>
+    <button class="filter-btn" onclick="filterProducts('keychain', this)">Keychains</button>
+    <button class="filter-btn" onclick="filterProducts('acrylic', this)">Acrylic</button>
+    <button class="filter-btn" onclick="filterProducts('other', this)">Other</button>
+  </div>
+
+  <!-- ── Product Grid ── -->
+  <div id="products">
+
+    <!-- 1. Round Magnet/Badge (Big) -->
+    <a class="product-card featured" href="image-frame-tool.html?d=58" data-category="magnet">
+      <div class="card-preview">
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" stroke="#c8f135" stroke-width="2"/>
+            <circle cx="50" cy="50" r="34" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.35)" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="10" fill="rgba(200,241,53,0.15)" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="4" fill="rgba(200,241,53,0.5)"/>
+            <line x1="15" y1="50" x2="22" y2="50" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
+            <line x1="78" y1="50" x2="85" y2="50" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
+            <line x1="50" y1="15" x2="50" y2="22" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
+            <line x1="50" y1="78" x2="50" y2="85" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Round Magnet / Badge</span>
+        <span class="card-sub">Big size</span>
+        <span class="card-size" style="--before:'⌀'">58 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- 2. Round Magnet/Badge (Small) -->
+     <a class="product-card featured" href="image-frame-tool.html?d=44" data-category="magnet">
+      <div class="card-preview">
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="50" r="30" stroke="#c8f135" stroke-width="2"/>
+            <circle cx="50" cy="50" r="22" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.35)" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="8" fill="rgba(200,241,53,0.15)" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
+            <circle cx="50" cy="50" r="3" fill="rgba(200,241,53,0.5)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Round Magnet / Badge</span>
+        <span class="card-sub">Small size</span>
+        <span class="card-size" style="--before:'⌀'">44 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- 3. Round Keychain (Small) -->
+     <a class="product-card featured" href="image-frame-tool.html?d=44" data-category="keychain">
+      <div class="card-preview">
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 120" fill="none">
+            <circle cx="50" cy="30" r="9" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
+            <circle cx="50" cy="30" r="4" stroke="rgba(200,241,53,0.4)" stroke-width="1.5"/>
+            <circle cx="50" cy="72" r="33" stroke="rgba(200,241,53,1)" stroke-width="2"/>
+            <circle cx="50" cy="72" r="25" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.35)" stroke-width="1.5"/>
+            
+          </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Round Keychain</span>
+        <span class="card-sub">Small size</span>
+        <span class="card-size" style="--before:'⌀'">44 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- 4. Square Magnet/Badge -->
+     <a class="product-card featured" href="image-frame-tool.html?w=50&h=50" data-category="magnet">
+      <div class="card-preview">
+        <span class="card-tag popular">Popular</span>
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 100" fill="none">
+            <rect x="18" y="18" width="64" height="64" rx="6" stroke="#c8f135" stroke-width="2"/>
+            <rect x="28" y="28" width="44" height="44" rx="4" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
+            <rect x="44" y="44" width="12" height="12" rx="2" fill="rgba(200,241,53,0.3)" stroke="rgba(200,241,53,0.5)" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Square Magnet</span>
+        <span class="card-sub">Standard size</span>
+        <span class="card-size-rect" style="--before:'▯'">50 × 50 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- 5. Acrylic Magnet -->
+    <a class="product-card featured" href="image-frame-tool.html?w=70&h=95" data-category="acrylic magnet">
+      <div class="card-preview">
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 140" fill="none" xmlns="http://w3.org">
+          <rect x="16" y="16" width="68" height="108" rx="10" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
+          <rect x="22" y="22" width="56" height="96" rx="7" fill="rgba(200,241,53,0.06)"/>
+          <rect x="30" y="30" width="40" height="80" rx="5" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
+          <rect x="46" y="66" width="8" height="8" rx="2" fill="rgba(200,241,53,0.35)"/>
+        </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Acrylic Magnet</span>
+        <span class="card-sub">Premium finish</span>
+        <span class="card-size-rect" style="--before:'▯'">70 × 95 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- 6. Acrylic Keychain -->
+    <a class="product-card featured" href="image-frame-tool.html?w=30&h=44&q=2" data-category="acrylic keychain">
+      <div class="card-preview">
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 120" fill="none">
+            <circle cx="47" cy="24" r="9" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
+            <circle cx="47" cy="24" r="4" stroke="rgba(200,241,53,0.4)" stroke-width="1.5"/>
+            <!-- acrylic body rounded rect -->
+            <rect x="17" y="33" width="60" height="76" rx="10" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
+            <rect x="24" y="40" width="46" height="62" rx="7" fill="rgba(200,241,53,0.06)"/>
+            <rect x="34" y="55" width="26" height="32" rx="5" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Acrylic Keychain</span>
+        <span class="card-sub">Premium finish</span>
+        <span class="card-size-rect" style="--before:'▯'">30 × 44 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- 7. Polaroid -->
+    <a class="product-card featured" href="image-frame-tool.html?w=70&h=70" data-category="other">
+      <div class="card-preview">
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 120" fill="none">
+            <rect x="18" y="10" width="64" height="80" rx="3" stroke="#c8f135" stroke-width="2"/>
+            <rect x="24" y="16" width="52" height="52" rx="2" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
+            <line x1="24" y1="16" x2="30" y2="16" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="24" y1="16" x2="24" y2="22" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="76" y1="16" x2="70" y2="16" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="76" y1="16" x2="76" y2="22" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="24" y1="68" x2="24" y2="62" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="24" y1="68" x2="30" y2="68" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="76" y1="68" x2="70" y2="68" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="76" y1="68" x2="76" y2="62" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
+            <line x1="30" y1="83" x2="70" y2="83" stroke="rgba(200,241,53,0.2)" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Polaroid</span>
+        <span class="card-sub">Classic style</span>
+        <span class="card-size-rect" style="--before:'▯'">70 × 70 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+    <!-- 8. Mirror & Opener -->
+    <a class="product-card featured" href="image-frame-tool.html?d=58" data-category="other">
+      <div class="card-preview">
+        <div class="shape-wrap">
+          <svg viewBox="0 0 100 120" fill="none">
+            <circle cx="50" cy="45" r="30" stroke="rgba(200,241,53,0.6)" stroke-width="2"/>
+            <circle cx="50" cy="45" r="24" fill="rgba(200,241,53,0.05)" stroke="rgba(200,241,53,0.25)" stroke-width="1.5"/>
+            <circle cx="50" cy="45" r="10" fill="rgba(200,241,53,0.08)" stroke="rgba(200,241,53,0.3)" stroke-width="1"/>
+            <rect x="36" y="76" width="28" height="14" rx="4" stroke="rgba(200,241,53,0.45)" stroke-width="1.5"/>
+            <rect x="40" y="80" width="20" height="6" rx="2" fill="rgba(200,241,53,0.1)" stroke="rgba(200,241,53,0.25)" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-info">
+        <span class="card-name">Mirror & Opener</span>
+        <span class="card-sub">Dual function</span>
+        <span class="card-size" style="--before:'⌀'">58 mm</span>
+        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
+          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        </div>
+      </div>
+      <div class="card-arrow">
+        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8M7 3l4 4-4 4"/>
+        </svg>
+      </div>
+    </a>
+
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+// Filter logic
+function filterProducts(cat, btn) {
+  // Update active filter button
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.querySelectorAll('.product-card').forEach(card => {
+    const cats = card.dataset.category || '';
+    if (cat === 'all' || cats.includes(cat)) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  // Re-manage featured spanning when filtering
+  const featured = document.querySelector('.product-card.featured');
+  if (featured && featured.style.display !== 'none') {
+    featured.style.gridColumn = 'span 2';
+  }
+}
+</script>
+
+</body>
+</html>
