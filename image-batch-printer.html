@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BatchPrint</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: #2e2e2e;
+    --accent: #e8f94a;
+    --accent-dim: #c5d93a;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --text-dim: #555;
+    --danger: #ff4d4d;
+    --success: #4dff91;
+    --warning: #ffaa33;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .header-actions { display: flex; gap: 12px; align-items: center; }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: 0.3px;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0f0f0f;
+    padding: 10px 20px;
+  }
+  .btn-primary:hover { background: var(--accent-dim); }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text);
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: var(--border); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    padding: 10px 18px;
+    border: 1px solid var(--danger);
+  }
+  .btn-danger:hover { background: rgba(255,77,77,0.1); }
+
+  .btn-success {
+    background: var(--success);
+    color: #0f0f0f;
+    padding: 11px 22px;
+    font-size: 13px;
+  }
+  .btn-success:hover { background: #3de07e; }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── LANDING ── */
+  #page-landing {
+    display: none;
+    min-height: calc(100vh - 65px);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 28px;
+    text-align: center;
+    padding: 40px;
+  }
+  #page-landing.active { display: flex; }
+
+  .landing-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--surface2);
+    border: 2px dashed var(--border);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .landing-title {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+  .landing-title span { color: var(--accent); }
+
+  .landing-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    max-width: 380px;
+    line-height: 1.7;
+  }
+
+  #folder-input { display: none; }
+
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 48px 64px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .drop-zone:hover {
+    border-color: var(--accent);
+    background: rgba(232,249,74,0.03);
+  }
+
+  /* ── DASHBOARD ── */
+  #page-dashboard { padding: 32px; }
+
+  .dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .dashboard-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .folder-path {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .category-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .category-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease;
+  }
+  .category-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateY(-2px);
+  }
+  .category-card:hover::before { transform: scaleX(1); }
+
+  .category-card.warning {
+    border-color: var(--warning);
+    cursor: default;
+  }
+  .category-card.warning::before { background: var(--warning); }
+  .category-card.all-done { border-color: var(--success); }
+  .category-card.all-done::before { background: var(--success); transform: scaleX(1); }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+
+  .card-name {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 6px;
+  }
+
+  .card-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .card-progress {
+    margin-top: 14px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .card-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .all-done .card-progress-fill { background: var(--success); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 99px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+  .badge-warning { background: rgba(255,170,51,0.15); color: var(--warning); }
+  .badge-done { background: rgba(77,255,145,0.15); color: var(--success); }
+
+  /* ── PREVIEW ── */
+  #page-preview { padding: 28px 32px; }
+
+  .preview-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .btn-back {
+    background: var(--surface2);
+    color: var(--text);
+    padding: 9px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-back:hover { background: var(--border); }
+
+  .preview-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .preview-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  .preview-info {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .preview-info strong { color: var(--text); font-weight: 500; }
+
+  /* Canvas wrapper — screen display */
+  .canvas-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+
+  .canvas-outer {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 0 1.5px #333, 0 20px 60px rgba(0,0,0,0.6);
+  }
+
+  .canvas-strip {
+    display: flex;
+    align-items: center;
+    background: white;
+  }
+
+  .canvas-strip .img-slot {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .canvas-strip .img-slot:last-child { border-right: none; }
+
+  .canvas-strip .img-slot img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+
+  .canvas-strip .img-slot.empty {
+    background: #f8f8f8;
+  }
+
+  /* Pagination controls */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .page-indicator {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0 8px;
+  }
+  .page-indicator strong { color: var(--accent); }
+
+  /* Action buttons */
+  .preview-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    body > * { display: none !important; }
+    #print-area { display: block !important; }
+    #print-area {
+      position: fixed !important;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0; padding: 0;
+    }
+  }
+
+  #print-area {
+    display: none;
+    width: var(--print-w, 210mm);
+    height: var(--print-h, 75mm);
+    background: white;
+    box-sizing: border-box;
+  }
+
+  #print-area .print-inner {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    background: white;
+    overflow: visible;
+  }
+
+  #print-area .print-slot {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    position: relative;
+  }
+  #print-area .print-slot:last-child { border-right: none; }
+  #print-area .print-slot img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+  .empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
+
+
+  /* ── TABS ── */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+  }
+  .tab-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #0f0f0f;
+  }
+  .tab-btn:not(.active):hover { background: var(--border); color: var(--text); }
+
+  /* ── MANUAL PRINT GRID ── */
+  .manual-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 4px;
+  }
+  .manual-thumb {
+    position: relative;
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+    aspect-ratio: 1;
+    background: var(--surface2);
+    transition: border-color 0.15s;
+  }
+  .manual-thumb:hover { border-color: var(--accent); }
+  .manual-thumb.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .manual-thumb.disabled { opacity: 0.35; cursor: not-allowed; }
+  .manual-thumb img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .manual-thumb .thumb-check {
+    position: absolute; top: 5px; right: 5px;
+    width: 20px; height: 20px;
+    background: var(--accent); color: #0f0f0f;
+    border-radius: 50%; font-size: 11px;
+    display: none; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .manual-thumb.selected .thumb-check { display: flex; }
+  .manual-thumb .thumb-done-badge {
+    position: absolute; bottom: 4px; left: 4px;
+    background: rgba(77,255,145,0.85); color: #0f0f0f;
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    padding: 2px 5px; border-radius: 4px; font-weight: 600;
+  }
+  .manual-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; gap: 16px;
+  }
+  .manual-sel-info {
+    font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted);
+  }
+  .manual-sel-info strong { color: var(--accent); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Batch<span>Print</span></div>
+  <div class="header-actions" id="header-actions">
+    <span id="header-folder-name" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);"></span>
+    <button class="btn btn-ghost" id="btn-change-folder" style="display:none" onclick="changeFolderHandler()">⟳ Change Folder</button>
+  </div>
+</header>
+
+<!-- LANDING -->
+<div id="page-landing" class="page active">
+  <div class="landing-icon">🖨</div>
+  <div>
+    <div class="landing-title">Batch<span>Print</span></div>
+    <div style="margin-top:6px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);">image strip printer</div>
+  </div>
+  <div class="landing-sub">Select your root images folder. Each subfolder becomes a print category.</div>
+  <input type="file" id="folder-input" webkitdirectory multiple accept="image/*">
+  <div class="drop-zone" onclick="document.getElementById('folder-input').click()">
+    <div style="font-size:36px;">📁</div>
+    <div style="font-size:15px;font-weight:700;">Select Images Folder</div>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);">click to browse your local folder</div>
+    <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('folder-input').click()">Open Folder</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="page-dashboard" class="page">
+  <div class="dashboard-header">
+    <div>
+      <div class="dashboard-title">Categories</div>
+      <div class="folder-path" id="folder-path-display">📁 <span></span></div>
+    </div>
+    <button class="btn btn-ghost" onclick="resetAllProgress()" style="color:var(--text-muted);font-size:11px;">↺ Reset All Progress</button>
+  </div>
+  <div class="category-grid" id="category-grid"></div>
+</div>
+
+<!-- PREVIEW -->
+<div id="page-preview" class="page">
+  <div class="preview-header">
+    <button class="btn-back" onclick="goToDashboard()">← Back</button>
+    <div>
+      <div class="preview-title" id="preview-title"></div>
+      <div class="preview-subtitle" id="preview-subtitle"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-batch" onclick="switchTab('batch')">📋 Batch Print</button>
+    <button class="tab-btn" id="tab-manual" onclick="switchTab('manual')">🖐 Manual Print</button>
+  </div>
+
+  <!-- BATCH TAB -->
+  <div id="tab-content-batch">
+    <div class="preview-info">
+      <div>Canvas: <strong id="info-canvas"></strong></div>
+      <div>Images/strip: <strong id="info-count"></strong></div>
+      <div>Batch: <strong id="info-batch"></strong></div>
+      <div>Remaining: <strong id="info-remaining"></strong></div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <div class="canvas-outer" id="canvas-outer">
+        <div class="canvas-strip" id="canvas-strip"></div>
+      </div>
+    </div>
+
+    <div class="pagination" id="pagination">
+      <button class="btn btn-ghost" id="btn-prev" onclick="prevPage()">← Prev</button>
+      <div class="page-indicator" id="page-indicator"></div>
+      <button class="btn btn-ghost" id="btn-next" onclick="nextPage()">Next →</button>
+    </div>
+
+    <div class="preview-actions">
+      <button class="btn btn-ghost" onclick="printCurrent()">🖨 Print This Strip</button>
+      <button class="btn btn-ghost" onclick="exportCurrent()">⬇ Export Image</button>
+      <button class="btn btn-success" onclick="markCurrentDone()">✓ Mark as Done</button>
+    </div>
+  </div>
+
+  <!-- MANUAL TAB -->
+  <div id="tab-content-manual" style="display:none">
+    <div class="preview-info" style="margin-bottom:16px;">
+      <div>Canvas: <strong id="info-canvas-manual"></strong></div>
+      <div>Max selectable: <strong id="info-max-select"></strong></div>
+      <div>Total images: <strong id="info-total-manual"></strong></div>
+    </div>
+    <div class="manual-grid" id="manual-grid"></div>
+    <!-- Manual strip preview -->
+    <div id="manual-strip-preview" style="display:none;margin-top:24px;">
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:10px;">STRIP PREVIEW</div>
+      <div class="canvas-wrapper">
+        <div class="canvas-outer" id="manual-canvas-outer">
+          <div class="canvas-strip" id="manual-canvas-strip"></div>
+        </div>
+      </div>
+      <div class="preview-actions" style="margin-top:16px;">
+        <button class="btn btn-ghost" id="btn-manual-print" onclick="printManualStrip()">🖨 Print This Strip</button>
+        <button class="btn btn-ghost" id="btn-manual-export" onclick="exportManualStrip()">⬇ Export Image</button>
+        <button class="btn btn-success" id="btn-manual-mark" onclick="markManualDone()">✓ Mark as Done</button>
+      </div>
+    </div>
+
+    <div class="manual-footer">
+      <div class="manual-sel-info">Selected: <strong id="manual-sel-count">0</strong> / <span id="manual-sel-max"></span></div>
+      <div style="display:flex;gap:12px;">
+        <button class="btn btn-ghost" onclick="clearManualSelection()">✕ Clear</button>
+        <button class="btn btn-primary" id="btn-manual-preview" onclick="previewManualStrip()" disabled>👁 Preview Strip</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden print area -->
+<div id="print-area"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// CATEGORY CONFIG — add new categories here
+// shape + shapeDims are AUTO-DERIVED from the folder name:
+//   "48mm"      → circle, diameter = 48mm
+//   "50x50mm"   → rectangle, 50×50mm
+// ─────────────────────────────────────────────
+const CATEGORY_CONFIG = {
+  "48mm":     { name: "Small Round",      canvasW: 210, canvasH: 75,  count: 3, render: "circle_guide",   guideD: 55 },
+  "58mm":     { name: "Big Round",        canvasW: 210, canvasH: 99,  count: 3, render: "circle_guide",   guideD: 70 },
+  "50x50mm":  { name: "Square Magnet",    canvasW: 210, canvasH: 75,  count: 3, render: "square_guide",   guideW: 62, guideH: 62 },
+  "70x95mm":  { name: "Acrylic Magnet",   canvasW: 210, canvasH: 95,  count: 3, render: "default" },
+  "31x45mm":  { name: "Acrylic Keychain", canvasW: 210, canvasH: 45,  count: 6, render: "keychain" },
+  "76x90mm": { name: "Polaroid", canvasW: 152, canvasH: 102, count: 2, render: "polaroid", guideW: 76, guideH: 90, imgW: 70, imgH: 70, padTop: 3, padSide: 3 },
+};
+
+// Auto-derive shape info from category name
+function deriveShape(catName) {
+  // Rectangle pattern: e.g. 70x90mm or 70X90mm
+  const rectMatch = catName.match(/^(\d+)[xX](\d+)mm$/i);
+  if (rectMatch) {
+    return { shape: 'rect', shapeW: parseInt(rectMatch[1]), shapeH: parseInt(rectMatch[2]) };
+  }
+  // Circle pattern: e.g. 44mm
+  const circMatch = catName.match(/^(\d+)mm$/i);
+  if (circMatch) {
+    return { shape: 'circle', diameter: parseInt(circMatch[1]) };
+  }
+  return null; // unknown / not configured
+}
+
+function getConfig(catName) {
+  const base = CATEGORY_CONFIG[catName];
+  if (!base) return null;
+  const shape = deriveShape(catName);
+  return { ...base, ...shape };
+}
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let allFiles = {};        // { categoryName: [File, ...] }
+let folderName = '';
+let currentCategory = null;
+let currentPage = 0;      // 0-indexed
+let currentImages = [];   // pending (not-done) File objects for current category
+
+// ─────────────────────────────────────────────
+// FOLDER INPUT
+// ─────────────────────────────────────────────
+document.getElementById('folder-input').addEventListener('change', function(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  loadFolder(files);
+});
+
+function loadFolder(files) {
+  allFiles = {};
+  const imageTypes = ['image/jpeg','image/png','image/gif','image/webp','image/bmp','image/tiff'];
+
+  files.forEach(file => {
+    const parts = file.webkitRelativePath.split('/');
+    if (parts.length < 2) return; // skip root-level files
+    const category = parts[1];
+    if (!imageTypes.includes(file.type) && !file.name.match(/\.(jpe?g|png|gif|webp|bmp|tiff?)$/i)) return;
+    if (!allFiles[category]) allFiles[category] = [];
+    allFiles[category].push(file);
+  });
+
+  // Sort each category's images by name (file order)
+  Object.keys(allFiles).forEach(cat => {
+    allFiles[cat].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  });
+
+  // Grab root folder name
+  if (files[0]) {
+    folderName = files[0].webkitRelativePath.split('/')[0];
+  }
+
+  showDashboard();
+}
+
+function changeFolderHandler() {
+  document.getElementById('folder-input').click();
+}
+
+// ─────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────
+function showDashboard() {
+  showPage('page-dashboard');
+  document.getElementById('folder-path-display').querySelector('span').textContent = folderName;
+  document.getElementById('btn-change-folder').style.display = 'flex';
+  document.getElementById('header-folder-name').textContent = '📁 ' + folderName;
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const grid = document.getElementById('category-grid');
+  grid.innerHTML = '';
+
+  const categories = Object.keys(allFiles).sort();
+
+  if (!categories.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">📭</div>No image subfolders found in selected folder.</div>`;
+    return;
+  }
+
+  categories.forEach(cat => {
+    const config = getConfig(cat);
+    const total = allFiles[cat].length;
+    const done = getDoneList(cat).length;
+    const pending = total - done;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const allDone = pending === 0;
+
+    const card = document.createElement('div');
+    card.className = 'category-card' + (allDone ? ' all-done' : '') + (!config ? ' warning' : '');
+
+    if (!config) {
+      card.innerHTML = `
+        <div class="card-icon">⚠️</div>
+        <div class="card-name">${cat}</div>
+        <div class="card-meta">${total} images<br>Not configured</div>
+        <span class="badge badge-warning">⚙ Add to config</span>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="card-icon">${allDone ? '✅' : '🖼'}</div>
+        <div class="card-name">${config.name}</div>
+        <div class="card-meta" style="color:var(--text-dim);font-size:10px;margin-bottom:4px;">${cat}</div>
+        <div class="card-meta">
+          ${total} images &nbsp;·&nbsp; ${config.count}/strip<br>
+          ${config.canvasW}×${config.canvasH}mm canvas<br>
+          <span style="color:${allDone ? 'var(--success)' : 'var(--text)'}">
+            ${pending} pending &nbsp;·&nbsp; ${done} done
+          </span>
+        </div>
+        <div class="card-progress"><div class="card-progress-fill" style="width:${pct}%"></div></div>
+        ${allDone ? '<span class="badge badge-done">✓ All done</span>' : ''}
+      `;
+      if (!allDone) {
+        card.addEventListener('click', () => openCategory(cat));
+      }
+    }
+
+    grid.appendChild(card);
+  });
+}
+
+// ─────────────────────────────────────────────
+// DONE LIST (localStorage)
+// ─────────────────────────────────────────────
+function getDoneList(cat) {
+  const key = `batchprint__${folderName}__${cat}`;
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
+  catch { return []; }
+}
+
+function saveDoneList(cat, list) {
+  const key = `batchprint__${folderName}__${cat}`;
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+function resetAllProgress() {
+  if (!confirm('Reset all progress for this folder? This cannot be undone.')) return;
+  Object.keys(allFiles).forEach(cat => {
+    const key = `batchprint__${folderName}__${cat}`;
+    localStorage.removeItem(key);
+  });
+  renderDashboard();
+}
+
+// ─────────────────────────────────────────────
+// PREVIEW
+// ─────────────────────────────────────────────
+function openCategory(cat) {
+  const config = getConfig(cat);
+  if (!config) return;
+
+  currentCategory = cat;
+  currentPage = 0;
+
+  const done = getDoneList(cat);
+  currentImages = allFiles[cat].filter(f => !done.includes(f.name));
+
+  if (!currentImages.length) {
+    alert('All images in this category are marked as done!');
+    return;
+  }
+
+  showPage('page-preview');
+  document.getElementById('preview-title').textContent = config.name;
+
+  const totalPages = Math.ceil(currentImages.length / config.count);
+  document.getElementById('preview-subtitle').textContent =
+    `${cat} · ${currentImages.length} pending images · ${totalPages} strip${totalPages > 1 ? 's' : ''}`;
+
+  document.getElementById('info-canvas').textContent = `${config.canvasW}×${config.canvasH}mm`;
+  document.getElementById('info-count').textContent = config.count;
+
+  renderPreviewPage();
+}
+
+function renderPreviewPage() {
+  const config = getConfig(currentCategory);
+  const count = config.count;
+  const totalPages = Math.ceil(currentImages.length / count);
+  const start = currentPage * count;
+  const pageFiles = currentImages.slice(start, start + count);
+
+  // Info bar
+  document.getElementById('info-batch').textContent = `${currentPage + 1} / ${totalPages}`;
+  document.getElementById('info-remaining').textContent = `${currentImages.length - start - pageFiles.length} after this`;
+
+  // Pagination controls
+  const paginationEl = document.getElementById('pagination');
+  paginationEl.style.display = totalPages > 1 ? 'flex' : 'none';
+  document.getElementById('btn-prev').disabled = currentPage === 0;
+  document.getElementById('btn-next').disabled = currentPage >= totalPages - 1;
+  document.getElementById('page-indicator').innerHTML =
+    `Strip <strong>${currentPage + 1}</strong> of <strong>${totalPages}</strong>`;
+
+  // Canvas sizing — scale mm to px for screen (1mm ≈ 3.78px)
+  const PX_PER_MM = 3.78;
+  const cW = Math.round(config.canvasW * PX_PER_MM);
+  const cH = Math.round(config.canvasH * PX_PER_MM);
+
+  const outer = document.getElementById('canvas-outer');
+  outer.style.width = cW + 'px';
+  outer.style.height = cH + 'px';
+
+  const strip = document.getElementById('canvas-strip');
+  strip.style.width = cW + 'px';
+  strip.style.height = cH + 'px';
+  strip.innerHTML = '';
+
+  // Render slots
+  renderStrip(strip, config, pageFiles, cW, cH, PX_PER_MM, false);
+
+  // Update print area
+  updatePrintArea(config, pageFiles);
+}
+
+// ─────────────────────────────────────────────
+// STRIP RENDERER — dispatches per render type
+// ─────────────────────────────────────────────
+function renderStrip(container, config, files, cW, cH, pxPerMm, forPrint) {
+  container.innerHTML = '';
+  // Reset container styles that keychain may have mutated
+  container.style.display = 'flex';
+  container.style.position = '';
+  const count = config.count;
+  const u = v => forPrint ? v + 'mm' : Math.round(v * pxPerMm) + 'px';
+  const px = v => forPrint ? v + 'mm' : Math.round(v * pxPerMm) + 'px';
+
+  if (config.render === 'keychain') {
+    // Each image is exactly 31×45mm, 6 images = 186mm, centered in 210mm canvas
+    const imgW = 31; // mm
+    const imgH = 45; // mm
+    const totalUsed = imgW * count; // 186mm
+    const sideMargin = (config.canvasW - totalUsed) / 2; // 12mm total → 6mm each side
+
+    container.style.position = 'relative';
+    container.style.display = 'block'; // override flex for precise positioning
+
+    // Outer wrapper to handle centering
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;flex-direction:row;align-items:center;
+      position:absolute;
+      left:${u(sideMargin)};top:0;
+      width:${u(totalUsed)};height:${forPrint ? cH+'mm' : cH+'px'};`;
+
+    for (let i = 0; i < count; i++) {
+      const slot = document.createElement('div');
+      slot.style.cssText = `
+        flex-shrink:0;
+        width:${u(imgW)};height:${u(imgH)};
+        border-right:${i < count - 1 ? '1px solid #000' : 'none'};
+        overflow:hidden;box-sizing:border-box;background:white;`;
+      if (i < files.length) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(files[i]);
+        img.alt = files[i].name; img.title = files[i].name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        slot.appendChild(img);
+      }
+      row.appendChild(slot);
+    }
+    container.appendChild(row);
+
+  } else if (config.render === 'polaroid') {
+    // Each slot is guideW wide, guideH tall, anchored top-left
+    // Image sits inside with padTop/padSide padding
+    for (let i = 0; i < count; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'img-slot' + (i >= files.length ? ' empty' : '');
+      slot.style.cssText = `position:relative;flex:1;height:${forPrint ? cH+'mm' : cH+'px'};display:flex;align-items:flex-start;justify-content:flex-start;overflow:visible;background:white;`;
+
+      if (i < files.length) {
+        // Guide outline — anchored top:0 left:0 of slot
+        const guide = document.createElement('div');
+        guide.style.cssText = `position:absolute;top:0;left:0;
+          width:${u(config.guideW)};height:${u(config.guideH)};
+          border:1px solid #000;box-sizing:border-box;pointer-events:none;z-index:2;`;
+        slot.appendChild(guide);
+
+        // Image — padTop from top, padSide from left
+        const imgWrap = document.createElement('div');
+        imgWrap.style.cssText = `position:absolute;
+          top:${u(config.padTop)};left:${u(config.padSide)};
+          width:${u(config.imgW)};height:${u(config.imgH)};
+          overflow:hidden;flex-shrink:0;z-index:1;`;
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(files[i]);
+        img.alt = files[i].name; img.title = files[i].name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        imgWrap.appendChild(img);
+        slot.appendChild(imgWrap);
+      }
+      container.appendChild(slot);
+    }
+
+  } else if (config.render === 'circle_guide') {
+    // Clip image to circle (diameter = shape diameter), draw outer guide ring
+    for (let i = 0; i < count; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'img-slot' + (i >= files.length ? ' empty' : '');
+      slot.style.cssText = `position:relative;flex:1;height:${forPrint?cH+'mm':cH+'px'};display:flex;align-items:center;justify-content:center;background:white;overflow:visible;`;
+
+      if (i < files.length) {
+        // Outer guide ring
+        const guide = document.createElement('div');
+        guide.style.cssText = `position:absolute;width:${u(config.guideD)};height:${u(config.guideD)};
+          border-radius:50%;border:1px solid #000;box-sizing:border-box;pointer-events:none;z-index:2;`;
+        slot.appendChild(guide);
+
+        // Clipped image circle (shape diameter = the XXmm folder name)
+        const frame = document.createElement('div');
+        frame.style.cssText = `overflow:hidden;flex-shrink:0;border-radius:50%;
+          width:${u(config.diameter)};height:${u(config.diameter)};z-index:1;position:relative;`;
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(files[i]);
+        img.alt = files[i].name; img.title = files[i].name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        frame.appendChild(img);
+        slot.appendChild(frame);
+      }
+      container.appendChild(slot);
+    }
+
+  } else if (config.render === 'square_guide') {
+    // Clip image to square (shape dims), draw outer guide square
+    for (let i = 0; i < count; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'img-slot' + (i >= files.length ? ' empty' : '');
+      slot.style.cssText = `position:relative;flex:1;height:${forPrint?cH+'mm':cH+'px'};display:flex;align-items:center;justify-content:center;background:white;overflow:visible;`;
+
+      if (i < files.length) {
+        // Outer guide square
+        const guide = document.createElement('div');
+        guide.style.cssText = `position:absolute;width:${u(config.guideW)};height:${u(config.guideH)};
+          border:1px solid #000;box-sizing:border-box;pointer-events:none;z-index:2;`;
+        slot.appendChild(guide);
+
+        // Clipped image square
+        const frame = document.createElement('div');
+        frame.style.cssText = `overflow:hidden;flex-shrink:0;
+          width:${u(config.shapeW)};height:${u(config.shapeH)};z-index:1;position:relative;`;
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(files[i]);
+        img.alt = files[i].name; img.title = files[i].name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        frame.appendChild(img);
+        slot.appendChild(frame);
+      }
+      container.appendChild(slot);
+    }
+
+  } else {
+    // Default: image clipped to shape (circle or rect) centered in slot
+    for (let i = 0; i < count; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'img-slot' + (i >= files.length ? ' empty' : '');
+      slot.style.cssText = `flex:1;height:${forPrint?cH+'mm':cH+'px'};display:flex;align-items:center;justify-content:center;background:white;overflow:hidden;`;
+
+      if (i < files.length) {
+        const frame = document.createElement('div');
+        frame.style.cssText = 'overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+        if (config.shape === 'circle') {
+          frame.style.width = u(config.diameter);
+          frame.style.height = u(config.diameter);
+          frame.style.borderRadius = '50%';
+        } else if (config.shape === 'rect') {
+          frame.style.width = u(config.shapeW);
+          frame.style.height = u(config.shapeH);
+        } else {
+          frame.style.width = '100%'; frame.style.height = '100%';
+        }
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(files[i]);
+        img.alt = files[i].name; img.title = files[i].name;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+        frame.appendChild(img);
+        slot.appendChild(frame);
+      }
+      container.appendChild(slot);
+    }
+  }
+}
+
+function buildShapedImage(file, config, pxPerMm, forPrint) {
+  // legacy shim — not used directly anymore but kept for safety
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%;';
+  return wrapper;
+}
+
+function updatePrintArea(config, pageFiles) {
+  const printArea = document.getElementById('print-area');
+  printArea.style.setProperty('--print-w', config.canvasW + 'mm');
+  printArea.style.setProperty('--print-h', config.canvasH + 'mm');
+  printArea.style.width = config.canvasW + 'mm';
+  printArea.style.height = config.canvasH + 'mm';
+  printArea.innerHTML = '';
+
+  const inner = document.createElement('div');
+  inner.className = 'print-inner';
+  printArea.appendChild(inner);
+
+  printArea.style.display = 'block';
+  renderStrip(inner, config, pageFiles, config.canvasW, config.canvasH, null, true);
+  printArea.style.display = 'none';
+}
+
+function prevPage() {
+  if (currentPage > 0) { currentPage--; renderPreviewPage(); }
+}
+
+function nextPage() {
+  const config = getConfig(currentCategory);
+  const total = Math.ceil(currentImages.length / config.count);
+  if (currentPage < total - 1) { currentPage++; renderPreviewPage(); }
+}
+
+// ─────────────────────────────────────────────
+// CANVAS-BASED PRINT — composites strip into a
+// single <img> so border is never clipped
+// ─────────────────────────────────────────────
+const MM_TO_PX_PRINT = 11.811; // 300dpi: 1mm = 300/25.4 px
+
+async function renderStripToCanvas(config, files) {
+  const W = Math.round(config.canvasW * MM_TO_PX_PRINT);
+  const H = Math.round(config.canvasH * MM_TO_PX_PRINT);
+  const count = config.count;
+  const slotW = Math.floor(W / count);
+  const u = v => Math.round(v * MM_TO_PX_PRINT);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // White background
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, W, H);
+
+  // Load all images first
+  const loadImg = src => new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = src;
+  });
+
+  for (let i = 0; i < count; i++) {
+    const x = i * slotW;
+    if (i >= files.length) continue;
+    const url = URL.createObjectURL(files[i]);
+    const img = await loadImg(url);
+
+    if (config.render === 'keychain') {
+      // Fixed 31×45mm per slot, centered in canvas
+      const imgWpx = u(31);
+      const imgHpx = u(45);
+      const totalUsedPx = imgWpx * count;
+      const sideMarginPx = Math.round((W - totalUsedPx) / 2);
+      const x2 = sideMarginPx + i * imgWpx;
+      const y2 = Math.round((H - imgHpx) / 2);
+      ctx.drawImage(img, x2, y2, imgWpx, imgHpx);
+      // Divider line between slots
+      if (i < count - 1) {
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x2 + imgWpx, y2);
+        ctx.lineTo(x2 + imgWpx, y2 + imgHpx);
+        ctx.stroke();
+      }
+
+    } else if (config.render === 'polaroid') {
+      const padTop = u(config.padTop);
+      const padSide = u(config.padSide);
+      const imgW = u(config.imgW);
+      const imgH = u(config.imgH);
+      const gW = u(config.guideW);
+      const gH = u(config.guideH);
+      // Guide anchored to top-left of slot
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, 0.5, gW - 1, gH - 1);
+      // Image with padding from top-left of slot
+      ctx.drawImage(img, x + padSide, padTop, imgW, imgH);
+
+    } else if (config.render === 'circle_guide') {
+      const d = u(config.diameter);
+      const gD = u(config.guideD);
+      const cx = x + slotW / 2;
+      const cy = H / 2;
+      // Clip circle and draw image
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, cx - d / 2, cy - d / 2, d, d);
+      ctx.restore();
+      // Guide ring
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, gD / 2, 0, Math.PI * 2);
+      ctx.stroke();
+
+    } else if (config.render === 'square_guide') {
+      const sW = u(config.shapeW);
+      const sH = u(config.shapeH);
+      const gW = u(config.guideW);
+      const gH = u(config.guideH);
+      const cx = x + slotW / 2;
+      const cy = H / 2;
+      // Clip rect and draw image
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx - sW / 2, cy - sH / 2, sW, sH);
+      ctx.clip();
+      ctx.drawImage(img, cx - sW / 2, cy - sH / 2, sW, sH);
+      ctx.restore();
+      // Guide square
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx - gW / 2, cy - gH / 2, gW, gH);
+
+    } else {
+      // Default: clip to shape
+      const cx = x + slotW / 2;
+      const cy = H / 2;
+      if (config.shape === 'circle') {
+        const d = u(config.diameter);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(img, cx - d / 2, cy - d / 2, d, d);
+        ctx.restore();
+      } else if (config.shape === 'rect') {
+        const sW = u(config.shapeW);
+        const sH = u(config.shapeH);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx - sW / 2, cy - sH / 2, sW, sH);
+        ctx.clip();
+        ctx.drawImage(img, cx - sW / 2, cy - sH / 2, sW, sH);
+        ctx.restore();
+      } else {
+        ctx.drawImage(img, x, 0, slotW, H);
+      }
+    }
+  }
+
+  // Draw outer border — inset by 0.5px so it's fully inside
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+  return canvas;
+}
+
+async function printWithCanvas(config, files) {
+  const canvas = await renderStripToCanvas(config, files);
+  const dataUrl = canvas.toDataURL('image/png');
+
+  const isPolaroid = config.render === 'polaroid';
+
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = '';
+  printArea.style.position = 'relative';
+
+  const img = document.createElement('img');
+  printArea.appendChild(img);
+
+  // Wait for image to fully load into DOM before printing
+  await new Promise(resolve => {
+    img.onload = resolve;
+    img.src = dataUrl;
+  });
+
+  if (isPolaroid) {
+    // Polaroid: exact 4R page, image fills page
+    printArea.style.width = config.canvasW + 'mm';
+    printArea.style.height = config.canvasH + 'mm';
+    img.style.cssText = `width:${config.canvasW}mm;height:${config.canvasH}mm;display:block;`;
+  } else {
+    // All others: A4 page, strip centered
+    printArea.style.width = '210mm';
+    printArea.style.height = '297mm';
+    img.style.cssText = `
+      width:${config.canvasW}mm;
+      height:${config.canvasH}mm;
+      display:block;
+      position:absolute;
+      top:0;left:0;
+    `;
+  }
+
+  // Inject dynamic @page size
+  const pageStyle = document.createElement('style');
+  pageStyle.id = '__print_page_style';
+  pageStyle.textContent = isPolaroid
+    ? `@page { size: ${config.canvasW}mm ${config.canvasH}mm; margin: 0; }`
+    : `@page { size: 210mm 297mm portrait; margin: 0; }`;
+  document.head.appendChild(pageStyle);
+
+  printArea.style.display = 'block';
+  window.print();
+
+  setTimeout(() => {
+    printArea.style.display = 'none';
+    const s = document.getElementById('__print_page_style');
+    if (s) s.remove();
+  }, 500);
+}
+
+function printCurrent() {
+  const config = getConfig(currentCategory);
+  const count = config.count;
+  const start = currentPage * count;
+  const pageFiles = currentImages.slice(start, start + count);
+  printWithCanvas(config, pageFiles);
+}
+
+async function exportCurrent() {
+  const config = getConfig(currentCategory);
+  const count = config.count;
+  const start = currentPage * count;
+  const pageFiles = currentImages.slice(start, start + count);
+  const filename = `${config.name}_strip_${currentPage + 1}.png`;
+  await exportStrip(config, pageFiles, filename);
+}
+
+async function exportManualStrip() {
+  const config = getConfig(currentCategory);
+  const selectedFiles = getManualFiles();
+  const filename = `${config.name}_manual.png`;
+  await exportStrip(config, selectedFiles, filename);
+}
+
+async function exportStrip(config, files, filename) {
+  const stripCanvas = await renderStripToCanvas(config, files);
+  const isPolaroid = config.render === 'polaroid';
+
+  let finalCanvas;
+  if (isPolaroid) {
+    finalCanvas = stripCanvas;
+  } else {
+    // Place strip at top-left of A4 canvas (300dpi)
+    const A4_W = Math.round(210 * MM_TO_PX_PRINT);
+    const A4_H = Math.round(297 * MM_TO_PX_PRINT);
+    finalCanvas = document.createElement('canvas');
+    finalCanvas.width = A4_W;
+    finalCanvas.height = A4_H;
+    const ctx = finalCanvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, A4_W, A4_H);
+    ctx.drawImage(stripCanvas, 0, 0);
+  }
+
+  const a = document.createElement('a');
+  a.href = finalCanvas.toDataURL('image/png');
+  a.download = filename;
+  a.click();
+}
+
+// ─────────────────────────────────────────────
+// MARK AS DONE
+// ─────────────────────────────────────────────
+function markCurrentDone() {
+  const config = getConfig(currentCategory);
+  const count = config.count;
+  const start = currentPage * count;
+  const pageFiles = currentImages.slice(start, start + count);
+
+  const done = getDoneList(currentCategory);
+  pageFiles.forEach(f => { if (!done.includes(f.name)) done.push(f.name); });
+  saveDoneList(currentCategory, done);
+
+  // Revoke object URLs for this batch
+  pageFiles.forEach(f => {
+    const img = document.querySelector(`#canvas-strip img[alt="${f.name}"]`);
+    if (img) URL.revokeObjectURL(img.src);
+  });
+
+  // Refresh pending list
+  const allDone = getDoneList(currentCategory);
+  currentImages = allFiles[currentCategory].filter(f => !allDone.includes(f.name));
+
+  if (!currentImages.length) {
+    alert('🎉 All images in "' + currentCategory + '" are done!');
+    goToDashboard();
+    return;
+  }
+
+  // Stay on same page index if possible
+  const newTotal = Math.ceil(currentImages.length / count);
+  if (currentPage >= newTotal) currentPage = newTotal - 1;
+  renderPreviewPage();
+
+  // Update subtitle
+  document.getElementById('preview-subtitle').textContent =
+    `${currentImages.length} pending images · ${newTotal} strip${newTotal > 1 ? 's' : ''}`;
+}
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+let activeTab = 'batch';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-batch').classList.toggle('active', tab === 'batch');
+  document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
+  document.getElementById('tab-content-batch').style.display = tab === 'batch' ? 'block' : 'none';
+  document.getElementById('tab-content-manual').style.display = tab === 'manual' ? 'block' : 'none';
+  if (tab === 'manual') renderManualGrid();
+}
+
+// ─────────────────────────────────────────────
+// MANUAL PRINT
+// ─────────────────────────────────────────────
+let manualSelected = []; // array of file names
+
+function renderManualGrid() {
+  const config = getConfig(currentCategory);
+  const allCatFiles = allFiles[currentCategory] || [];
+  const doneList = getDoneList(currentCategory);
+  const grid = document.getElementById('manual-grid');
+  grid.innerHTML = '';
+  manualSelected = [];
+  updateManualFooter();
+
+  document.getElementById('info-canvas-manual').textContent = `${config.canvasW}×${config.canvasH}mm`;
+  document.getElementById('info-max-select').textContent = config.count;
+  document.getElementById('info-total-manual').textContent = allCatFiles.length;
+  document.getElementById('manual-sel-max').textContent = config.count;
+  document.getElementById('manual-strip-preview').style.display = 'none';
+
+  allCatFiles.forEach(file => {
+    const isDone = doneList.includes(file.name);
+    const thumb = document.createElement('div');
+    thumb.className = 'manual-thumb';
+    thumb.dataset.filename = file.name;
+
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.alt = file.name;
+    thumb.appendChild(img);
+
+    const check = document.createElement('div');
+    check.className = 'thumb-check';
+    check.textContent = '✓';
+    thumb.appendChild(check);
+
+    if (isDone) {
+      const badge = document.createElement('div');
+      badge.className = 'thumb-done-badge';
+      badge.textContent = 'done';
+      thumb.appendChild(badge);
+    }
+
+    thumb.addEventListener('click', () => toggleManualThumb(thumb, file.name));
+    grid.appendChild(thumb);
+  });
+}
+
+function toggleManualThumb(thumb, filename) {
+  const config = getConfig(currentCategory);
+  if (thumb.classList.contains('selected')) {
+    // deselect
+    thumb.classList.remove('selected');
+    manualSelected = manualSelected.filter(n => n !== filename);
+    // re-enable all disabled thumbs
+    document.querySelectorAll('.manual-thumb.disabled').forEach(t => t.classList.remove('disabled'));
+  } else {
+    if (manualSelected.length >= config.count) return; // cap reached
+    thumb.classList.add('selected');
+    manualSelected.push(filename);
+    // disable unselected thumbs if cap reached
+    if (manualSelected.length >= config.count) {
+      document.querySelectorAll('.manual-thumb:not(.selected)').forEach(t => t.classList.add('disabled'));
+    }
+  }
+  updateManualFooter();
+  // hide strip preview when selection changes
+  document.getElementById('manual-strip-preview').style.display = 'none';
+}
+
+function updateManualFooter() {
+  document.getElementById('manual-sel-count').textContent = manualSelected.length;
+  const hasSelection = manualSelected.length > 0;
+  document.getElementById('btn-manual-preview').disabled = !hasSelection;
+}
+
+function clearManualSelection() {
+  manualSelected = [];
+  document.querySelectorAll('.manual-thumb').forEach(t => {
+    t.classList.remove('selected', 'disabled');
+  });
+  updateManualFooter();
+  document.getElementById('manual-strip-preview').style.display = 'none';
+}
+
+function getManualFiles() {
+  const allCatFiles = allFiles[currentCategory] || [];
+  return manualSelected.map(name => allCatFiles.find(f => f.name === name)).filter(Boolean);
+}
+
+function previewManualStrip() {
+  const config = getConfig(currentCategory);
+  const selectedFiles = getManualFiles();
+  const PX_PER_MM = 3.78;
+  const cW = Math.round(config.canvasW * PX_PER_MM);
+  const cH = Math.round(config.canvasH * PX_PER_MM);
+
+  const outer = document.getElementById('manual-canvas-outer');
+  outer.style.width = cW + 'px';
+  outer.style.height = cH + 'px';
+
+  const strip = document.getElementById('manual-canvas-strip');
+  strip.style.width = cW + 'px';
+  strip.style.height = cH + 'px';
+
+  renderStrip(strip, config, selectedFiles, cW, cH, PX_PER_MM, false);
+  document.getElementById('manual-strip-preview').style.display = 'block';
+}
+
+function printManualStrip() {
+  const config = getConfig(currentCategory);
+  const selectedFiles = getManualFiles();
+  printWithCanvas(config, selectedFiles);
+}
+
+function markManualDone() {
+  const selectedFiles = getManualFiles();
+  const doneList = getDoneList(currentCategory);
+  let changed = false;
+  selectedFiles.forEach(f => {
+    if (!doneList.includes(f.name)) {
+      doneList.push(f.name);
+      changed = true;
+    }
+  });
+  if (changed) {
+    saveDoneList(currentCategory, doneList);
+    // Update done badges on thumbnails
+    selectedFiles.forEach(f => {
+      const thumb = document.querySelector(`.manual-thumb[data-filename="${f.name}"]`);
+      if (thumb && !thumb.querySelector('.thumb-done-badge')) {
+        const badge = document.createElement('div');
+        badge.className = 'thumb-done-badge';
+        badge.textContent = 'done';
+        thumb.appendChild(badge);
+      }
+    });
+    // Sync batch tab pending images
+    const allDone = getDoneList(currentCategory);
+    currentImages = allFiles[currentCategory].filter(f => !allDone.includes(f.name));
+  }
+}
+
+// ─────────────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goToDashboard() {
+  activeTab = 'batch';
+  switchTab('batch');
+  showPage('page-dashboard');
+  renderDashboard();
+}
+</script>
+</body>
+</html>

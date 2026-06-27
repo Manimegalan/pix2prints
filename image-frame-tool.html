@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pix2Prints</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0c0f;
+  --surface: #16161a;
+  --surface2: #1f1f26;
+  --border: #2a2a35;
+  --border2: #3a3a48;
+  --accent: #c8f135;
+  --accent2: #7c6cff;
+  --text: #efefef;
+  --muted: #7a7a8a;
+  --frame-px: 300px;
+  --frame-w-px: 300px;
+  --frame-h-px: 300px;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: 13px;
+  overscroll-behavior: none; -webkit-tap-highlight-color: transparent;
+}
+
+/* ════════════════════════════════
+   APP SHELL — fixed full viewport
+   ════════════════════════════════ */
+#app {
+  position: fixed; inset: 0;
+  max-width: 480px; margin: 0 auto;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+}
+
+/* ── Top header (branding) ── */
+#topbar {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  display: flex; align-items: center; gap: 10px;
+}
+.brand-logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.brand-logo svg { display: block; }
+.brand-text {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.brand-company {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted);
+}
+.brand-product {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px; font-weight: 800;
+  letter-spacing: -0.5px; color: var(--text);
+  line-height: 1;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.badge {
+  font-size: 10px; color: var(--accent);
+  border: 1px solid var(--accent); padding: 3px 8px; border-radius: 20px;
+  letter-spacing: 0.04em;
+}
+#gb-load {
+  display: none; align-items: center; gap: 5px;
+  padding: 6px 11px; border-radius: 6px; border: 1px solid var(--border2);
+  background: transparent; color: var(--muted);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  cursor: pointer; transition: all 0.12s; flex-shrink: 0;
+}
+#gb-load:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── Canvas zone (fills remaining space) ── */
+#canvas-zone {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0; overflow: hidden;
+}
+
+/* DSLR guide bar — sits right above canvas */
+#guide-bar {
+  width: 100%;
+  display: flex; align-items: center; gap: 2px;
+  padding: 5px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.guide-sep { width: 1px; height: 14px; background: var(--border2); margin: 0 6px; flex-shrink: 0; }
+.guide-spacer { flex: 1; }
+.guide-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 8px; border-radius: 5px; border: 1px solid transparent;
+  background: transparent; color: var(--muted);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  cursor: pointer; transition: all 0.12s; white-space: nowrap; flex-shrink: 0;
+}
+.guide-btn:hover { color: var(--text); border-color: var(--border2); }
+.guide-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(200,241,53,0.06); }
+
+/* canvas frame */
+#canvas-wrap {
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px;
+  width: 100%;
+}
+/* Split (quantity=2) layout */
+#frame-outer.split {
+  display: flex;
+  flex-direction: row;
+}
+#frame-outer.split .split-half {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  background: #0d0d10;
+  cursor: grab;
+}
+#frame-outer.split .split-half:active { cursor: grabbing; }
+#frame-outer.split .split-half .img-layer-split {
+  position: absolute; top: 0; left: 0;
+  transform-origin: center center;
+  will-change: transform;
+  pointer-events: none;
+  user-select: none; -webkit-user-select: none;
+}
+#frame-outer.split .split-half .img-layer-split img {
+  display: block; width: 100%; height: 100%; object-fit: fill;
+  pointer-events: none; user-select: none; -webkit-user-drag: none;
+}
+/* Divider line between halves */
+#frame-outer.split .split-divider {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+  z-index: 20;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+/* Circle split */
+#frame-outer.split.circle { border-radius: 50%; overflow: hidden; }
+#frame-outer {
+  position: relative; width: var(--frame-w-px); height: var(--frame-h-px); flex-shrink: 0;
+  overflow: visible;
+}
+/* Corner marks — hidden in circle mode */
+#frame-outer::before, #frame-outer::after,
+#frame-inner-tl::before, #frame-inner-tl::after {
+  content: ''; position: absolute; width: 14px; height: 14px;
+  border-color: var(--accent); border-style: solid; z-index: 10; pointer-events: none;
+}
+#frame-outer::before { top:0; left:0; border-width: 2px 0 0 2px; }
+#frame-outer::after  { top:0; right:0; border-width: 2px 2px 0 0; }
+#frame-inner-tl::before { bottom:0; left:0; border-width: 0 0 2px 2px; }
+#frame-inner-tl::after  { bottom:0; right:0; border-width: 0 2px 2px 0; }
+/* Circle mode — round clip, accent ring, hide corners */
+#frame-outer.circle #frame-clip  { border-radius: 50%; }
+#frame-outer.circle #ghost-layer { border-radius: 50%; }
+#frame-outer.circle::before,
+#frame-outer.circle::after,
+#frame-outer.circle #frame-inner-tl::before,
+#frame-outer.circle #frame-inner-tl::after { display: none; }
+/* Circle border ring */
+#frame-outer.circle::before {
+  display: block;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  top: 0; left: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 10;
+}
+#frame-clip {
+  position: absolute; inset: 0; overflow: hidden; background: #0d0d10; cursor: grab;
+}
+#frame-clip:active { cursor: grabbing; }
+
+/* Ghost layer — shows image outside the frame as a faint glass echo */
+#ghost-layer {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: center center;
+  pointer-events: none;
+  user-select: none; -webkit-user-select: none;
+  will-change: transform;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: -1;
+  filter: blur(2px) saturate(0.6);
+}
+#ghost-layer img {
+  display: block; width: 100%; height: 100%; object-fit: fill;
+  pointer-events: none; user-select: none; -webkit-user-drag: none;
+}
+#ghost-layer.visible { opacity: 0.22; }
+
+#img-layer {
+  position: absolute; top: 0; left: 0; transform-origin: center center;
+  will-change: transform; pointer-events: none; user-select: none; -webkit-user-select: none;
+}
+#img-layer img {
+  display: block; width: 100%; height: 100%; object-fit: fill;
+  pointer-events: none; user-select: none; -webkit-user-drag: none;
+}
+.slot-grid-overlay {
+  position: absolute; inset: 0; pointer-events: none; z-index: 5; opacity: 0.13; display: none;
+  background-image: linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px);
+  background-size: 25% 25%;
+}
+.slot-grid-overlay.visible { display: block; }
+.slot-center-cross { position: absolute; inset: 0; pointer-events: none; z-index: 6; display: none; }
+.slot-center-cross.visible { display: block; }
+.slot-center-cross::before {
+  content: ''; position: absolute; left: 50%; top: 0; width: 1px; height: 100%;
+  background: var(--accent2); opacity: 0.45; transform: translateX(-50%);
+}
+.slot-center-cross::after {
+  content: ''; position: absolute; top: 50%; left: 0; height: 1px; width: 100%;
+  background: var(--accent2); opacity: 0.45; transform: translateY(-50%);
+}
+#drop-hint {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  pointer-events: none; z-index: 8; transition: opacity 0.2s;
+}
+#drop-hint.hidden { opacity: 0; }
+.drop-icon { width: 38px; height: 38px; border: 1.5px dashed var(--muted); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.drop-icon svg { opacity: 0.5; }
+#drop-hint p { color: var(--muted); font-size: 11px; text-align: center; line-height: 1.6; }
+
+/* ════════════════════════════════
+   BOTTOM CONTROLS
+   ════════════════════════════════ */
+#controls-bottom {
+  flex-shrink: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 200px; /* fixed height — panels scroll inside, frame never moves */
+}
+
+/* Tab bar */
+#tab-bar {
+  display: flex;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tab-btn {
+  flex: 1; padding: 7px 4px 9px;
+  background: transparent; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: 'DM Mono', monospace; font-size: 9px;
+  letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+  transition: all 0.12s; display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+.tab-btn svg { opacity: 0.4; transition: opacity 0.12s; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn:hover svg { opacity: 0.75; }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-btn.active svg { opacity: 1; }
+
+/* Panel area */
+#panel-wrap { flex: 1; overflow-y: auto; border-bottom: 1px solid var(--border); }
+.panel { display: none; padding: 12px 16px 14px; }
+.panel.active { display: block; }
+
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px;
+}
+.panel-title { font-size: 10px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+.reset-btn {
+  font-size: 10px; color: var(--muted); background: none;
+  border: 1px solid var(--border); border-radius: 5px; padding: 3px 9px;
+  cursor: pointer; transition: color 0.12s, border-color 0.12s;
+}
+.reset-btn:hover { color: var(--accent); border-color: var(--accent); }
+.reset-btn:active { transform: scale(0.95); }
+
+.slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+.slider-name { font-size: 11px; color: var(--muted); min-width: 18px; flex-shrink: 0; }
+
+input[type=range] {
+  flex: 1; -webkit-appearance: none; appearance: none;
+  height: 3px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--text); border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1.5px var(--accent); cursor: pointer; transition: transform 0.1s;
+}
+input[type=range]:active::-webkit-slider-thumb { transform: scale(1.2); background: var(--accent); }
+input[type=range]::-moz-range-thumb {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--text); border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1.5px var(--accent); cursor: pointer;
+}
+.slider-val { font-size: 11px; color: var(--accent); min-width: 44px; text-align: right; flex-shrink: 0; }
+
+.link-btn {
+  width: 22px; height: 22px; border-radius: 4px; border: 1px solid var(--border2);
+  background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; padding: 0; transition: background 0.15s;
+}
+.link-btn.active { background: var(--accent2); border-color: var(--accent2); }
+.link-btn svg { pointer-events: none; }
+
+.toggle-row { display: flex; gap: 8px; }
+.toggle-btn {
+  flex: 1; padding: 10px 0; background: transparent; border: 1px solid var(--border2);
+  border-radius: 6px; color: var(--muted); font-family: 'DM Mono', monospace;
+  font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.toggle-btn.active { background: var(--surface2); border-color: var(--accent2); color: var(--accent2); }
+
+/* Export panel */
+/* Upload panel metadata */
+.meta-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  align-items: center;
+}
+.meta-key {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.meta-val {
+  font-size: 11px; color: var(--text);
+  display: flex; align-items: center; gap: 5px;
+}
+.meta-endpoint {
+  font-size: 10px; color: var(--accent2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--muted);
+  padding: 8px 11px; background: var(--surface2);
+  border-radius: 7px; border: 1px solid var(--border);
+}
+.info-val { color: var(--text); display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); display: inline-block; flex-shrink: 0; }
+.status-dot.loaded { background: var(--accent); }
+.btn {
+  width: 100%; padding: 12px;
+  border-radius: 8px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; border: 1.5px solid var(--border);
+  background: transparent; color: var(--text); transition: all 0.15s; letter-spacing: 0.02em;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #0c0c0f; }
+.btn-primary:hover { filter: brightness(1.08); }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); padding: 9px 16px 9px 12px; border-radius: 10px;
+  font-size: 11px; opacity: 0; transition: all 0.22s;
+  pointer-events: none; white-space: nowrap; z-index: 200;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.success { border-color: var(--accent); background: rgba(200,241,53,0.1); color: var(--accent); }
+#toast.error   { border-color: #ff5a5a; background: rgba(255,90,90,0.1); color: #ff5a5a; }
+#toast.loading { border-color: var(--accent2); background: rgba(124,108,255,0.1); color: var(--accent2); }
+#toast-icon { font-size: 14px; flex-shrink: 0; }
+#toast-msg  { flex: 1; }
+#file-input { display: none; }
+/* Active frame slot highlight */
+.frame-slot { transition: outline 0.15s; }
+.frame-slot.active-slot { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Top branding bar ── -->
+  <div id="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <!-- Frame / aperture icon -->
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <rect x="1" y="1" width="16" height="16" rx="3" stroke="#0c0c0f" stroke-width="1.5"/>
+          <rect x="4.5" y="4.5" width="9" height="9" rx="1.5" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="4.5" y1="1" x2="4.5" y2="4.5" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="13.5" y1="1" x2="13.5" y2="4.5" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="4.5" y1="13.5" x2="4.5" y2="17" stroke="#0c0c0f" stroke-width="1.5"/>
+          <line x1="13.5" y1="13.5" x2="13.5" y2="17" stroke="#0c0c0f" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-product">Pix2Prints</span>
+        <span class="brand-company">Customized fridge magnets</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge">50 × 50 mm</span>
+      <button id="gb-load">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Load
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Canvas zone (fills all remaining space) ── -->
+  <div id="canvas-zone">
+
+    <!-- DSLR guide bar pinned above canvas -->
+    <div id="guide-bar">
+      <button class="guide-btn" id="gb-grid">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="0.75" y="0.75" width="12.5" height="12.5" rx="1"/>
+          <line x1="4.67" y1="0.75" x2="4.67" y2="13.25"/>
+          <line x1="9.33" y1="0.75" x2="9.33" y2="13.25"/>
+          <line x1="0.75" y1="4.67" x2="13.25" y2="4.67"/>
+          <line x1="0.75" y1="9.33" x2="13.25" y2="9.33"/>
+        </svg>
+        Grid
+      </button>
+      <button class="guide-btn" id="gb-cross">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4">
+          <line x1="7" y1="1" x2="7" y2="13"/>
+          <line x1="1" y1="7" x2="13" y2="7"/>
+          <circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none"/>
+        </svg>
+        Center
+      </button>
+      <div class="guide-spacer"></div>
+      <div class="guide-sep"></div>
+      <span style="font-size:10px;color:var(--muted);padding:0 4px;" id="img-name-bar">no image</span>
+      <span id="status-dot-bar" style="width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;flex-shrink:0;margin-left:2px;"></span>
+    </div>
+
+    <!-- Frame preview -->
+    <div id="canvas-wrap">
+      <div id="frame-outer">
+        <div id="frame-inner-tl"></div>
+        <!-- ghost: outside-frame semi-transparent echo -->
+        <div id="ghost-layer"><img id="ghost-img" src="" alt="" draggable="false"></div>
+        <div id="frame-clip">
+          <div id="img-layer"><img id="preview-img" src="" alt="" draggable="false"></div>
+          <div id="drop-hint">
+            <div class="drop-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <p>Tap to load image<br>or drag &amp; drop</p>
+          </div>
+        </div>
+        <!-- Split divider (visible only in split mode) -->
+        <div id="split-divider" class="split-divider" style="display:none"></div>
+      </div>
+    </div>
+
+  </div><!-- /canvas-zone -->
+
+  <!-- ── Bottom controls ── -->
+  <div id="controls-bottom">
+
+    <!-- Panels -->
+    <div id="panel-wrap">
+
+      <div class="panel active" id="panel-pos">
+        <div class="panel-header">
+          <span class="panel-title">Position</span>
+          <button class="reset-btn" id="reset-pos">&#x21BA; Reset</button>
+        </div>
+        <div class="slider-row">
+          <span class="slider-name">X</span>
+          <input type="range" id="tx" min="-600" max="600" value="0" step="1">
+          <span class="slider-val" id="tx-val">0px</span>
+        </div>
+        <div class="slider-row" style="margin-bottom:4px">
+          <span class="slider-name">Y</span>
+          <input type="range" id="ty" min="-600" max="600" value="0" step="1">
+          <span class="slider-val" id="ty-val">0px</span>
+        </div>
+        <p style="font-size:10px;color:var(--muted);opacity:0.4">or drag image on canvas</p>
+      </div>
+
+      <div class="panel" id="panel-scale">
+        <div class="panel-header">
+          <span class="panel-title">Scale</span>
+          <button class="reset-btn" id="reset-scale">&#x21BA; Reset</button>
+        </div>
+        <div class="slider-row">
+          <span class="slider-name">W</span>
+          <input type="range" id="sw" min="10" max="600" value="100" step="1">
+          <span class="slider-val" id="sw-val">100%</span>
+          <button class="link-btn active" id="link-scale" title="Link W/H" aria-pressed="true">
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round">
+              <path d="M5 4H3a2 2 0 000 4h2"/><path d="M9 4h2a2 2 0 010 4H9"/>
+              <line x1="5" y1="7" x2="9" y2="7"/>
+            </svg>
+          </button>
+        </div>
+        <div class="slider-row" style="margin-bottom:0">
+          <span class="slider-name">H</span>
+          <input type="range" id="sh" min="10" max="600" value="100" step="1">
+          <span class="slider-val" id="sh-val">100%</span>
+          <span style="width:22px;flex-shrink:0"></span>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-rot">
+        <div class="panel-header">
+          <span class="panel-title">Rotation</span>
+          <button class="reset-btn" id="reset-rot">&#x21BA; Reset</button>
+        </div>
+        <div class="slider-row" style="margin-bottom:0">
+          <span class="slider-name">&#xb0;</span>
+          <input type="range" id="rot" min="-180" max="180" value="0" step="1">
+          <span class="slider-val" id="rot-val">0&#xb0;</span>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-flip">
+        <div class="panel-header">
+          <span class="panel-title">Flip</span>
+          <button class="reset-btn" id="reset-flip">&#x21BA; Reset</button>
+        </div>
+        <div class="toggle-row">
+          <button class="toggle-btn" id="flip-h">&#x21FA; Horizontal</button>
+          <button class="toggle-btn" id="flip-v">&#x2195; Vertical</button>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-export">
+        <div class="panel-header">
+          <span class="panel-title">Upload</span>
+          <button class="reset-btn" id="reset-all">&#x21BA; Reset all</button>
+        </div>
+        <button class="btn btn-primary" id="export-btn">
+          <span id="export-btn-label">Upload Image</span>
+        </button>
+      </div>
+
+    </div><!-- /panel-wrap -->
+
+    <!-- Tab bar -->
+    <div id="tab-bar">
+      <button class="tab-btn active" data-panel="pos">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <circle cx="12" cy="12" r="2.5"/>
+          <line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/>
+        </svg>
+        Position
+      </button>
+      <button class="tab-btn" data-panel="scale">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+        </svg>
+        Scale
+      </button>
+      <button class="tab-btn" data-panel="rot">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 11-.57-8.38"/>
+        </svg>
+        Rotate
+      </button>
+      <button class="tab-btn" data-panel="flip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <path d="M8 3H5a2 2 0 00-2 2v14a2 2 0 002 2h3"/>
+          <path d="M16 3h3a2 2 0 012 2v14a2 2 0 01-2 2h-3"/>
+          <line x1="12" y1="3" x2="12" y2="21"/>
+        </svg>
+        Flip
+      </button>
+      <button class="tab-btn" data-panel="export">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+          <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+        </svg>
+        Upload
+      </button>
+    </div>
+
+  </div><!-- /controls-bottom -->
+
+</div><!-- /app -->
+
+<input type="file" id="file-input" accept="image/*">
+<div id="toast"><span id="toast-icon"></span><span id="toast-msg"></span></div>
+<canvas id="export-canvas" style="display:none"></canvas>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  Frame Lab — Multi-frame JS
+//  Query params:
+//    ?d=50            circle (diameter mm)
+//    ?w=50&h=50       square / rectangle
+//    ?q=2             split into 2 independent frames
+//    ?endpoint=...    upload URL
+// ═══════════════════════════════════════════════════════
+const DPI = 300, MM_PER_INCH = 25.4, FRAME_PAD = 20;
+
+// ── Parse query params ──────────────────────────────────
+const _p     = new URLSearchParams(location.search);
+const _d     = parseFloat(_p.get('d'));
+const IS_CIRCLE = !!_d;
+const FRAME_W_MM = IS_CIRCLE ? _d : (parseFloat(_p.get('w')) || 50);
+const FRAME_H_MM = IS_CIRCLE ? _d : (parseFloat(_p.get('h')) || 50);
+const _qRaw  = parseInt(_p.get('q')) || 1;
+const _hasWH = !!(_p.get('w') && _p.get('h')); // q only valid when both w and h are present
+const QTY    = (_hasWH && _qRaw >= 1) ? Math.min(2, _qRaw) : 1; // clamp max to 2, ignore if no w/h
+const IS_SPLIT = QTY === 2;
+const ENDPOINT = _p.get('endpoint') || '';
+document.body.dataset.uploadEndpoint = ENDPOINT;
+
+// ── Per-frame state ─────────────────────────────────────
+function newState() {
+  return { tx:0, ty:0, sw:100, sh:100, rot:0, flipH:false, flipV:false,
+           imgW:0, imgH:0, linked:true, hasImage:false, imgSrc:'' };
+}
+const frames = [newState(), newState()]; // [frame0, frame1]
+let activeFrame = 0; // which frame controls affect
+
+// ── DOM refs ────────────────────────────────────────────
+const fileInput  = document.getElementById('file-input');
+const toastEl    = document.getElementById('toast');
+const toastIcon  = document.getElementById('toast-icon');
+const toastMsg   = document.getElementById('toast-msg');
+const statusDotBar = document.getElementById('status-dot-bar');
+const imgNameBar   = document.getElementById('img-name-bar');
+
+const sliders = {
+  tx: document.getElementById('tx'), ty: document.getElementById('ty'),
+  sw: document.getElementById('sw'), sh: document.getElementById('sh'),
+  rot: document.getElementById('rot'),
+};
+const vals = {
+  tx: document.getElementById('tx-val'), ty: document.getElementById('ty-val'),
+  sw: document.getElementById('sw-val'), sh: document.getElementById('sh-val'),
+  rot: document.getElementById('rot-val'),
+};
+
+// ── Compute frame pixel dimensions ──────────────────────
+function computeFramePx() {
+  const wrap   = document.getElementById('canvas-wrap');
+  const availW = wrap.clientWidth  - FRAME_PAD * 2;
+  const availH = wrap.clientHeight - FRAME_PAD * 2;
+  // total display width = FRAME_W_MM always (split divides it, doesn't multiply it)
+  const totalW = FRAME_W_MM;
+  const aspect = totalW / FRAME_H_MM;
+  let fw, fh;
+  if (availW / availH > aspect) { fh = availH; fw = Math.round(fh * aspect); }
+  else                          { fw = availW; fh = Math.round(fw / aspect); }
+  window._FW_TOTAL = fw;  // total outer width
+  window._FH       = fh;
+  window._SLOT_W   = IS_SPLIT ? Math.round(fw / 2) : fw; // single frame width
+  document.documentElement.style.setProperty('--frame-w-px', fw + 'px');
+  document.documentElement.style.setProperty('--frame-h-px', fh + 'px');
+  // resize frame-outer
+  const fo = document.getElementById('frame-outer');
+  fo.style.width  = fw + 'px';
+  fo.style.height = fh + 'px';
+}
+function slotW()  { return window._SLOT_W  || 300; }
+function totalFW(){ return window._FW_TOTAL || 300; }
+function FH()     { return window._FH       || 300; }
+
+// ── Build DOM frames ────────────────────────────────────
+function buildFrames() {
+  const fo = document.getElementById('frame-outer');
+
+  // Clear old dynamic content, keep frame-inner-tl
+  fo.querySelectorAll('.frame-slot, .frame-divider').forEach(el => el.remove());
+
+  // Remove old single-frame elements from outside (legacy)
+  ['ghost-layer','frame-clip'].forEach(id => {
+    const el = fo.querySelector('#' + id);
+    if (el) el.style.display = 'none'; // hide, don't remove (kept for compat)
+  });
+
+  for (let i = 0; i < QTY; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'frame-slot' + (i === activeFrame ? ' active-slot' : '');
+    slot.dataset.frameIndex = i;
+    slot.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: ${i * slotW()}px;
+      width: ${slotW()}px;
+      height: ${FH()}px;
+      overflow: hidden;
+      background: #0d0d10;
+      cursor: grab;
+      box-sizing: border-box;
+    `;
+    if (IS_CIRCLE) slot.style.borderRadius = '50%';
+
+    // ghost — lives OUTSIDE the slot (sibling) so overflow:hidden doesn't clip it
+    const ghost = document.createElement('div');
+    ghost.className = 'slot-ghost';
+    ghost.style.cssText = `position:absolute;top:0;left:${i * slotW()}px;width:${slotW()}px;height:${FH()}px;transform-origin:center center;pointer-events:none;user-select:none;will-change:transform;opacity:0;transition:opacity 0.2s;z-index:0;filter:blur(2px) saturate(0.6);overflow:visible;`;
+    const ghostImg = document.createElement('img');
+    ghostImg.style.cssText = 'display:block;width:100%;height:100%;object-fit:fill;pointer-events:none;';
+    ghostImg.draggable = false;
+    ghost.appendChild(ghostImg);
+    fo.appendChild(ghost); // append to frame-outer BEFORE the slot
+
+    // img layer
+    const layer = document.createElement('div');
+    layer.className = 'slot-layer';
+    layer.style.cssText = 'position:absolute;top:0;left:0;transform-origin:center center;will-change:transform;pointer-events:none;user-select:none;';
+    const img = document.createElement('img');
+    img.style.cssText = 'display:block;width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none;';
+    img.draggable = false;
+    layer.appendChild(img);
+
+    // drop hint
+    const hint = document.createElement('div');
+    hint.className = 'slot-hint';
+    hint.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none;z-index:8;';
+    hint.innerHTML = `
+      <div style="width:32px;height:32px;border:1.5px dashed #7a7a8a;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a7a8a" stroke-width="1.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <p style="color:#7a7a8a;font-size:10px;text-align:center;line-height:1.5;">${IS_SPLIT ? 'Frame '+(i+1) : 'Tap to load'}<br>or drag &amp; drop</p>
+    `;
+
+    // frame number badge (split only)
+    if (IS_SPLIT) {
+      const badge = document.createElement('div');
+      badge.className = 'slot-badge';
+      badge.textContent = i + 1;
+      badge.style.cssText = 'position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:50%;background:var(--accent2);color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center;z-index:15;font-family:Syne,sans-serif;font-weight:700;pointer-events:none;';
+      slot.appendChild(badge);
+    }
+
+    // guide overlays
+    const gridOv = document.createElement('div');
+    gridOv.className = 'slot-grid-overlay';
+    const crossOv = document.createElement('div');
+    crossOv.className = 'slot-center-cross';
+
+    slot.appendChild(layer);
+    slot.appendChild(gridOv);
+    slot.appendChild(crossOv);
+    slot.appendChild(hint);
+    fo.appendChild(slot);
+
+    // drag events
+    setupSlotDrag(slot, i);
+    // tap to select + load
+    slot.addEventListener('click', () => selectFrame(i));
+  }
+
+  // Divider between frames
+  if (IS_SPLIT) {
+    const div = document.createElement('div');
+    div.className = 'frame-divider';
+    div.style.cssText = `position:absolute;top:0;left:50%;width:2px;height:100%;background:var(--accent);opacity:0.6;z-index:20;transform:translateX(-50%);pointer-events:none;`;
+    fo.appendChild(div);
+  }
+
+  // Circle ring border
+  if (IS_CIRCLE && !IS_SPLIT) {
+    const ring = document.createElement('div');
+    ring.style.cssText = 'position:absolute;inset:0;border-radius:50%;border:2px solid var(--accent);z-index:10;pointer-events:none;';
+    fo.appendChild(ring);
+  }
+
+  applyTransformAll();
+}
+
+// ── Slot resize on computeFramePx ───────────────────────
+function resizeSlots() {
+  const slots = document.querySelectorAll('.frame-slot');
+  slots.forEach((slot, i) => {
+    slot.style.left   = (i * slotW()) + 'px';
+    slot.style.width  = slotW() + 'px';
+    slot.style.height = FH() + 'px';
+  });
+  // reposition ghost siblings
+  const ghosts = document.querySelectorAll('#frame-outer > .slot-ghost');
+  ghosts.forEach((ghost, i) => {
+    ghost.style.left   = (i * slotW()) + 'px';
+    ghost.style.width  = slotW() + 'px';
+    ghost.style.height = FH() + 'px';
+  });
+  const div = document.querySelector('.frame-divider');
+  if (div) div.style.height = FH() + 'px';
+  applyTransformAll();
+}
+
+// ── Select active frame ──────────────────────────────────
+function selectFrame(idx) {
+  activeFrame = idx;
+  document.querySelectorAll('.frame-slot').forEach((s, i) => {
+    s.classList.toggle('active-slot', i === idx);
+  });
+  syncUI(); // refresh sliders to active frame state
+
+  // update guide-bar img name
+  const st = frames[activeFrame];
+  if (IS_SPLIT) {
+    const name = st.hasImage ? (st.imgName || 'image') : 'no image';
+    imgNameBar.textContent = 'Frame ' + (idx + 1) + ': ' + name;
+    statusDotBar.style.background = st.hasImage ? 'var(--accent)' : 'var(--muted)';
+  }
+}
+
+// ── Apply transform to one frame slot ───────────────────
+function applyTransform(idx) {
+  const st   = frames[idx];
+  const SW   = slotW(), FHpx = FH();
+  const bW   = st.imgW || SW;
+  const bH   = st.imgH || FHpx;
+  const scX  = (st.sw / 100) * (st.flipH ? -1 : 1);
+  const scY  = (st.sh / 100) * (st.flipV ? -1 : 1);
+  const tf   = `translate(${st.tx}px,${st.ty}px) rotate(${st.rot}deg) scale(${scX},${scY})`;
+
+  const slot  = document.querySelectorAll('.frame-slot')[idx];
+  if (!slot) return;
+  const layer = slot.querySelector('.slot-layer');
+  // ghost is a sibling of slot in frame-outer (outside overflow:hidden)
+  const ghost = document.querySelectorAll('#frame-outer > .slot-ghost')[idx];
+
+  layer.style.width  = bW + 'px';
+  layer.style.height = bH + 'px';
+  layer.style.left   = (SW/2 - bW/2) + 'px';
+  layer.style.top    = (FHpx/2 - bH/2) + 'px';
+  layer.style.transform = tf;
+
+  if (ghost) {
+    ghost.style.width  = bW + 'px';
+    ghost.style.height = bH + 'px';
+    ghost.style.left   = (idx * SW + SW/2 - bW/2) + 'px';
+    ghost.style.top    = (FHpx/2 - bH/2) + 'px';
+    ghost.style.transformOrigin = (bW/2) + 'px ' + (bH/2) + 'px';
+    ghost.style.transform = tf;
+    const offscreen = Math.abs(st.tx) > 4 || Math.abs(st.ty) > 4 || st.sw > 110 || st.sh > 110 || st.rot !== 0;
+    ghost.style.opacity = (st.hasImage && offscreen) ? '0.22' : '0';
+  }
+
+  // show/hide hint
+  const hint = slot.querySelector('.slot-hint');
+  hint.style.display = st.hasImage ? 'none' : 'flex';
+}
+
+function applyTransformAll() {
+  for (let i = 0; i < QTY; i++) applyTransform(i);
+}
+
+// ── Sync sliders to active frame ─────────────────────────
+function syncUI() {
+  const st = frames[activeFrame];
+  const absX = Math.abs(st.tx), absY = Math.abs(st.ty);
+  if (absX > +sliders.tx.max) { sliders.tx.min = -absX; sliders.tx.max = absX; }
+  if (absY > +sliders.ty.max) { sliders.ty.min = -absY; sliders.ty.max = absY; }
+  sliders.tx.value  = st.tx;  vals.tx.textContent  = st.tx  + 'px';
+  sliders.ty.value  = st.ty;  vals.ty.textContent  = st.ty  + 'px';
+  sliders.sw.value  = st.sw;  vals.sw.textContent  = st.sw  + '%';
+  sliders.sh.value  = st.sh;  vals.sh.textContent  = st.sh  + '%';
+  sliders.rot.value = st.rot; vals.rot.textContent = st.rot + '°';
+  const flipHBtn = document.getElementById('flip-h');
+  const flipVBtn = document.getElementById('flip-v');
+  if (flipHBtn) flipHBtn.classList.toggle('active', st.flipH);
+  if (flipVBtn) flipVBtn.classList.toggle('active', st.flipV);
+}
+
+// ── Drag (canvas pan) ────────────────────────────────────
+function setupSlotDrag(slot, idx) {
+  let drag = { active:false, sx:0, sy:0, otx:0, oty:0 };
+  function start(cx, cy) {
+    selectFrame(idx);
+    if (!frames[idx].hasImage) { fileInput.click(); return; }
+    drag.active = true; drag.sx = cx; drag.sy = cy;
+    drag.otx = frames[idx].tx; drag.oty = frames[idx].ty;
+  }
+  function move(cx, cy) {
+    if (!drag.active) return;
+    frames[idx].tx = Math.round(drag.otx + cx - drag.sx);
+    frames[idx].ty = Math.round(drag.oty + cy - drag.sy);
+    applyTransform(idx);
+    if (idx === activeFrame) syncUI();
+  }
+  function end() { drag.active = false; }
+
+  slot.addEventListener('mousedown', e => { if (e.button === 0) { e.preventDefault(); start(e.clientX, e.clientY); } });
+  window.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+  window.addEventListener('mouseup', end);
+  slot.addEventListener('touchstart', e => { if (e.touches.length === 1) { e.preventDefault(); start(e.touches[0].clientX, e.touches[0].clientY); } }, { passive:false });
+  window.addEventListener('touchmove', e => { if (drag.active && e.touches.length === 1) { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); } }, { passive:false });
+  window.addEventListener('touchend', end);
+}
+
+// ── Load image ───────────────────────────────────────────
+function loadImage(file, frameIdx) {
+  if (!file || !file.type.startsWith('image/')) { showToast('Not an image file', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const tmpImg = new Image();
+    tmpImg.onload = () => {
+      const asp = tmpImg.naturalWidth / tmpImg.naturalHeight;
+      const SW = slotW(), FHpx = FH();
+      const frameAsp = SW / FHpx;
+      const st = frames[frameIdx];
+      if (asp > frameAsp) { st.imgH = FHpx; st.imgW = Math.round(FHpx * asp); }
+      else                { st.imgW = SW;   st.imgH = Math.round(SW / asp); }
+      st.hasImage = true;
+      st.imgSrc   = e.target.result;
+      st.imgName  = file.name.length > 16 ? file.name.slice(0,14)+'…' : file.name;
+      // reset position
+      st.tx = 0; st.ty = 0; st.sw = 100; st.sh = 100; st.rot = 0; st.flipH = false; st.flipV = false;
+
+      // set img src in slot
+      const slot  = document.querySelectorAll('.frame-slot')[frameIdx];
+      const img   = slot.querySelector('.slot-layer img');
+      const ghostEl = document.querySelectorAll('#frame-outer > .slot-ghost')[frameIdx];
+      const ghostImg = ghostEl ? ghostEl.querySelector('img') : null;
+      img.src = e.target.result;
+      if (ghostImg) ghostImg.src = e.target.result;
+
+      applyTransform(frameIdx);
+      if (frameIdx === activeFrame) {
+        syncUI();
+        imgNameBar.textContent  = IS_SPLIT ? 'Frame '+(frameIdx+1)+': '+st.imgName : st.imgName;
+        statusDotBar.style.background = 'var(--accent)';
+      }
+    };
+    tmpImg.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// Load button in header — loads into active frame
+document.getElementById('gb-load').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) { loadImage(e.target.files[0], activeFrame); fileInput.value = ''; }
+});
+// Drag-drop onto page
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0], activeFrame); });
+
+// ── Sliders (always act on activeFrame) ──────────────────
+sliders.tx.addEventListener('input', () => { frames[activeFrame].tx = +sliders.tx.value; vals.tx.textContent = frames[activeFrame].tx+'px'; applyTransform(activeFrame); });
+sliders.ty.addEventListener('input', () => { frames[activeFrame].ty = +sliders.ty.value; vals.ty.textContent = frames[activeFrame].ty+'px'; applyTransform(activeFrame); });
+sliders.rot.addEventListener('input', () => { frames[activeFrame].rot = +sliders.rot.value; vals.rot.textContent = frames[activeFrame].rot+'°'; applyTransform(activeFrame); });
+sliders.sw.addEventListener('input', () => {
+  const st = frames[activeFrame];
+  st.sw = +sliders.sw.value;
+  if (st.linked) { st.sh = st.sw; sliders.sh.value = st.sh; vals.sh.textContent = st.sh+'%'; }
+  vals.sw.textContent = st.sw+'%'; applyTransform(activeFrame);
+});
+sliders.sh.addEventListener('input', () => {
+  const st = frames[activeFrame];
+  st.sh = +sliders.sh.value;
+  if (st.linked) { st.sw = st.sh; sliders.sw.value = st.sw; vals.sw.textContent = st.sw+'%'; }
+  vals.sh.textContent = st.sh+'%'; applyTransform(activeFrame);
+});
+const linkBtn = document.getElementById('link-scale');
+linkBtn.addEventListener('click', () => {
+  const st = frames[activeFrame];
+  st.linked = !st.linked;
+  linkBtn.classList.toggle('active', st.linked);
+});
+
+// ── Flip ─────────────────────────────────────────────────
+document.getElementById('flip-h').addEventListener('click', function() {
+  const st = frames[activeFrame]; st.flipH = !st.flipH;
+  this.classList.toggle('active', st.flipH); applyTransform(activeFrame);
+});
+document.getElementById('flip-v').addEventListener('click', function() {
+  const st = frames[activeFrame]; st.flipV = !st.flipV;
+  this.classList.toggle('active', st.flipV); applyTransform(activeFrame);
+});
+
+// ── Resets ────────────────────────────────────────────────
+function resetFrameState(st) {
+  Object.assign(st, { tx:0, ty:0, sw:100, sh:100, rot:0, flipH:false, flipV:false });
+}
+document.getElementById('reset-pos').addEventListener('click',   () => { const st=frames[activeFrame]; st.tx=0; st.ty=0; applyTransform(activeFrame); syncUI(); });
+document.getElementById('reset-scale').addEventListener('click', () => { const st=frames[activeFrame]; st.sw=100; st.sh=100; applyTransform(activeFrame); syncUI(); });
+document.getElementById('reset-rot').addEventListener('click',   () => { frames[activeFrame].rot=0; applyTransform(activeFrame); syncUI(); });
+document.getElementById('reset-flip').addEventListener('click',  () => {
+  const st=frames[activeFrame]; st.flipH=false; st.flipV=false;
+  document.getElementById('flip-h').classList.remove('active');
+  document.getElementById('flip-v').classList.remove('active');
+  applyTransform(activeFrame); syncUI();
+});
+document.getElementById('reset-all').addEventListener('click', () => {
+  frames.forEach(st => resetFrameState(st));
+  applyTransformAll(); syncUI();
+});
+
+// ── Tabs ──────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+  });
+});
+
+// ── Guide bar ─────────────────────────────────────────────
+let _gridVisible = false, _crossVisible = false;
+function toggleAllSlotOverlays(cls, show) {
+  document.querySelectorAll('.' + cls).forEach(el => el.classList.toggle('visible', show));
+}
+document.getElementById('gb-grid').addEventListener('click', function() {
+  _gridVisible = !_gridVisible;
+  this.classList.toggle('active', _gridVisible);
+  toggleAllSlotOverlays('slot-grid-overlay', _gridVisible);
+});
+document.getElementById('gb-cross').addEventListener('click', function() {
+  _crossVisible = !_crossVisible;
+  this.classList.toggle('active', _crossVisible);
+  toggleAllSlotOverlays('slot-center-cross', _crossVisible);
+});
+
+// ── Export canvas ─────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', async () => {
+  const endpoint = (document.body.dataset.uploadEndpoint || '').trim();
+  if (!endpoint) { showToast('No upload endpoint configured', 'error'); return; }
+
+  // Check all frames have images
+  const missing = frames.slice(0, QTY).filter(st => !st.hasImage);
+  if (missing.length > 0) {
+    showToast(IS_SPLIT ? 'Load images in both frames first' : 'Load an image first', 'error');
+    return;
+  }
+
+  const SLOT_EXP_W = Math.round((FRAME_W_MM / QTY) * DPI / MM_PER_INCH);
+  const SLOT_EXP_H = Math.round(FRAME_H_MM * DPI / MM_PER_INCH);
+  const canvas = document.getElementById('export-canvas');
+  canvas.width  = SLOT_EXP_W * QTY;
+  canvas.height = SLOT_EXP_H;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < QTY; i++) {
+    const st = frames[i];
+    const SW = slotW(), FHpx = FH();
+    const rX = SLOT_EXP_W / SW;
+    const rY = SLOT_EXP_H / FHpx;
+    const xOff = i * SLOT_EXP_W;
+
+    const tmpImg = new Image();
+    tmpImg.src = st.imgSrc;
+    await new Promise(res => { if (tmpImg.complete) res(); else tmpImg.onload = res; });
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(xOff, 0, SLOT_EXP_W, SLOT_EXP_H);
+    ctx.clip();
+    ctx.translate(xOff + SLOT_EXP_W / 2, SLOT_EXP_H / 2);
+    ctx.translate(st.tx * rX, st.ty * rY);
+    ctx.rotate(st.rot * Math.PI / 180);
+    ctx.scale((st.sw/100)*(st.flipH?-1:1), (st.sh/100)*(st.flipV?-1:1));
+    ctx.drawImage(tmpImg, -(st.imgW*rX)/2, -(st.imgH*rY)/2, st.imgW*rX, st.imgH*rY);
+    ctx.restore();
+  }
+
+  canvas.toBlob(async blob => {
+    const btn = document.getElementById('export-btn');
+    const btnLabel = document.getElementById('export-btn-label');
+    btn.disabled = true; btnLabel.textContent = 'Uploading…'; btn.style.opacity = '0.7';
+    showToast('Uploading…', 'loading', 0);
+
+    const w = IS_SPLIT ? FRAME_W_MM / QTY : FRAME_W_MM;
+    const h = FRAME_H_MM;
+    const url = IS_CIRCLE ? `${endpoint}?d=${w}` : `${endpoint}?w=${w}&h=${h}`;
+
+    try {
+      const res = await fetch(url, { method:'POST', headers:{'Content-Type':'image/png'}, body:blob });
+      if (res.ok) {
+        let data = {}; try { data = await res.json(); } catch(_){}
+        showToast('Uploaded → ' + (data.path || data.url || `${w}x${h}mm/export.png`), 'success');
+      } else {
+        showToast('Server error ' + res.status, 'error');
+      }
+    } catch(err) {
+      showToast(err.message.includes('fetch') ? 'Cannot reach server' : err.message.slice(0,50), 'error');
+    } finally {
+      btn.disabled = false; btnLabel.textContent = 'Upload Image'; btn.style.opacity = '';
+    }
+  }, 'image/png');
+});
+
+// ── Toast ─────────────────────────────────────────────────
+const TOAST_ICONS = { success:'✓', error:'✕', loading:'⋯', default:'' };
+let toastTimer;
+function showToast(msg, type='default', duration=3000) {
+  clearTimeout(toastTimer);
+  toastEl.className = 'show' + (type !== 'default' ? ' ' + type : '');
+  toastIcon.textContent = TOAST_ICONS[type] || '';
+  toastMsg.textContent  = msg;
+  if (duration > 0) toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+}
+
+// ── Badge ─────────────────────────────────────────────────
+(function setBadge() {
+  const slotW_mm = IS_SPLIT ? FRAME_W_MM / QTY : FRAME_W_MM;
+  const label = IS_CIRCLE
+    ? '⌀ ' + slotW_mm + ' mm'
+    : slotW_mm + '×' + FRAME_H_MM + ' mm';
+  const badge = document.querySelector('.badge');
+  if (badge) badge.textContent = IS_SPLIT ? label + ' ×' + QTY : label;
+})();
+
+// ── Init ──────────────────────────────────────────────────
+computeFramePx();
+buildFrames();
+selectFrame(0);
+syncUI();
+
+window.addEventListener('resize', () => {
+  computeFramePx();
+  resizeSlots();
+});
+</script>
+
+
+</body>
+</html>
