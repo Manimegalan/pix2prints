@@ -37,7 +37,6 @@
     min-height:100vh;
     display:flex;
     justify-content:center;
-    padding:32px 16px;
     -webkit-font-smoothing:antialiased;
     -webkit-tap-highlight-color:transparent;
   }
@@ -130,7 +129,7 @@
   .card:active{transform:scale(.99)}
 
   .card__media{
-    position:relative;height:190px;
+    position:relative;aspect-ratio:1/1;
     background:radial-gradient(120% 90% at 50% 18%, #FBFCFF 0%, var(--tile) 60%, var(--tile-2) 100%);
     overflow:hidden;
   }
@@ -211,6 +210,19 @@
 
   /* focus visibility */
   a:focus-visible,button:focus-visible,.chip:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:12px}
+
+  /* ---------- small screens (iPhone SE etc.) ---------- */
+  @media (max-width:380px){
+    .grid{gap:11px;padding:16px 2px 8px}
+    .card__media{aspect-ratio:4/3}
+    .card__body{padding:13px 12px 12px}
+    .card__name{font-size:16px}
+    .card__variant{font-size:12.5px}
+    .card__dim{margin-top:9px}
+    .card__foot{padding-top:12px}
+    .price b{font-size:20px}
+    .go{width:42px;height:42px}
+  }
 
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important}
