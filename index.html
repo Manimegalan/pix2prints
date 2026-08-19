@@ -2,686 +2,335 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Pix2Prints</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pix2Prints — Photo Print Products</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+  :root{
+    --ink:#14181F;
+    --ink-soft:#5B6472;
+    --ink-faint:#98A0AE;
+    --bg:#E8EAF2;
+    --surface:#FFFFFF;
+    --tile:#F2F3F9;
+    --tile-2:#EAECF5;
+    --coral:#FA6B5B;
+    --coral-ink:#E24A3B;
+    --coral-soft:#FFE7E2;
+    --line:#E6E8F0;
+    --radius-lg:26px;
+    --radius-md:20px;
+    --radius-sm:14px;
+    --shadow-card:0 18px 40px -22px rgba(20,24,31,.28);
+    --shadow-soft:0 10px 30px -18px rgba(20,24,31,.35);
+    --ink-2:#2A313C;
+  }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:radial-gradient(120% 60% at 50% 0%, #E1E4EF 0%, #D9DCEA 100%);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:32px 16px;
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+  }
 
-:root {
-  --bg: #0c0c0f;
-  --surface: #16161a;
-  --surface2: #1f1f26;
-  --border: #2a2a35;
-  --border2: #3a3a48;
-  --accent: #c8f135;
-  --accent2: #7c6cff;
-  --text: #efefef;
-  --muted: #7a7a8a;
-}
+  .phone{
+    width:100%;
+    max-width:412px;
+    background:var(--bg);
+    border-radius:44px;
+    padding:14px 16px 24px;
+    box-shadow:0 40px 90px -40px rgba(20,24,31,.55), 0 0 0 1px rgba(255,255,255,.5) inset;
+    position:relative;
+  }
 
-html { scroll-behavior: smooth; }
+  /* ---------- header ---------- */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 18px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand__logo{
+    width:52px;height:52px;border-radius:16px;
+    background:linear-gradient(155deg,#232A36,#14181F);
+    display:grid;place-items:center;
+    box-shadow:0 10px 20px -10px rgba(20,24,31,.6);flex:none;
+  }
+  .brand__logo svg{width:24px;height:24px}
+  .brand__name{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em;line-height:1}
+  .brand__tag{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.18em;color:var(--ink-faint);margin-top:5px;text-transform:uppercase}
+  .cart{
+    position:relative;flex:none;width:50px;height:50px;border-radius:16px;
+    background:var(--surface);border:1px solid var(--line);color:var(--ink);
+    cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow-soft);
+    transition:transform .15s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .cart:hover{transform:translateY(-2px);background:#FCFCFF}
+  .cart:active{transform:scale(.95)}
+  .cart svg{width:22px;height:22px}
+  .cart__count{
+    position:absolute;top:-7px;right:-7px;min-width:21px;height:21px;padding:0 5px;
+    border-radius:999px;background:var(--coral);color:#fff;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:11px;line-height:1;
+    display:grid;place-items:center;box-shadow:0 5px 10px -3px rgba(250,107,91,.7);border:2px solid var(--bg);
+  }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
-  overscroll-behavior-y: none;
-  -webkit-tap-highlight-color: transparent;
-  min-height: 100vh;
-}
+  /* ---------- hero ---------- */
+  .hero{position:relative;background:var(--surface);border-radius:var(--radius-lg);padding:30px 26px 26px;overflow:hidden;box-shadow:var(--shadow-card)}
+  .hero__blob{position:absolute;top:-70px;right:-60px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #FFE7E2, #FFD5CC 70%, #FFCDBE);opacity:.85;pointer-events:none}
+  .hero__blob::after{content:"";position:absolute;inset:38px;border-radius:50%;background:radial-gradient(circle at 40% 35%, rgba(255,255,255,.6), transparent 60%)}
+  .hero__inner{position:relative}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--coral-ink);text-transform:uppercase;display:inline-flex;align-items:center;gap:8px}
+  h1.hero__title{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:40px;line-height:1.02;letter-spacing:-.02em;margin:16px 0 14px;max-width:11ch}
+  .hero__sub{color:var(--ink-soft);font-size:15px;line-height:1.5;max-width:34ch}
+  .hero__cta{display:flex;align-items:center;gap:14px;margin-top:22px;flex-wrap:wrap}
+  .btn{font-family:'Inter',sans-serif;font-weight:600;font-size:15px;border:none;cursor:pointer;border-radius:14px;display:inline-flex;align-items:center;gap:10px;text-decoration:none;transition:transform .15s ease, box-shadow .2s ease, background .2s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn--primary{background:var(--ink);color:#fff;padding:14px 20px;box-shadow:0 14px 26px -14px rgba(20,24,31,.75)}
+  .btn--primary:hover{background:#0C1016}
+  .btn--primary svg{width:18px;height:18px}
+  .specs{display:flex;gap:8px;margin-top:24px;flex-wrap:wrap}
+  .spec{font-family:'Space Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.02em;background:var(--tile);color:var(--ink-2);padding:8px 12px;border-radius:10px;display:inline-flex;align-items:center;gap:7px}
+  .spec svg{width:12px;height:12px;color:var(--coral)}
 
-/* ══════════════════════════════
-   TOPBAR
-   ══════════════════════════════ */
-#topbar {
-  position: sticky; top: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px;
-  height: 56px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  backdrop-filter: blur(12px);
-}
+  /* ---------- search ---------- */
+  .search{margin:18px 4px 0;background:var(--surface);border-radius:18px;box-shadow:var(--shadow-card);display:flex;align-items:center;gap:12px;padding:6px 6px 6px 18px}
+  .search svg.mag{width:19px;height:19px;color:var(--ink-faint);flex:none}
+  .search input{border:none;outline:none;background:transparent;font-family:'Inter';font-size:15px;color:var(--ink);flex:1;padding:14px 0}
+  .search input::placeholder{color:var(--ink-faint)}
+  .search__upload{flex:none;width:46px;height:46px;border-radius:13px;background:var(--coral-soft);color:var(--coral-ink);border:none;cursor:pointer;display:grid;place-items:center;transition:transform .15s ease, background .2s ease}
+  .search__upload:hover{background:#FFD9D1}
+  .search__upload:active{transform:scale(.94)}
+  .search__upload svg{width:20px;height:20px}
 
-.brand { display: flex; align-items: center; gap: 10px; }
-.brand-logo {
-  width: 32px; height: 32px;
-  background: var(--accent);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.brand-logo svg { display: block; }
-.brand-text { display: flex; flex-direction: column; gap: 1px; }
-.brand-company {
-  font-family: 'Syne', sans-serif;
-  font-size: 10px; font-weight: 600;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--muted);
-}
-.brand-product {
-  font-family: 'Syne', sans-serif;
-  font-size: 16px; font-weight: 800;
-  letter-spacing: -0.5px; color: var(--text);
-  line-height: 1;
-}
+  /* ---------- explore ---------- */
+  .explore-head{display:flex;align-items:baseline;justify-content:space-between;margin:30px 6px 16px}
+  .explore-head h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em}
+  .count{font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-faint);letter-spacing:.02em}
+  .chips{display:flex;gap:9px;overflow-x:auto;padding:2px 6px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{font-family:'Inter';font-weight:600;font-size:14px;background:var(--surface);color:var(--ink-2);border:1px solid transparent;padding:11px 18px;border-radius:999px;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow-soft);transition:background .18s ease,color .18s ease,transform .12s ease}
+  .chip:hover{transform:translateY(-1px)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:0 12px 22px -14px rgba(20,24,31,.7)}
 
-.topbar-right { display: flex; align-items: center; gap: 8px; }
-.badge {
-  font-size: 10px; color: var(--muted);
-  border: 1px solid var(--border2); padding: 3px 8px; border-radius: 20px;
-  letter-spacing: 0.04em;
-}
-.badge.accent { color: var(--accent); border-color: var(--accent); }
+  /* ---------- product grid ---------- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:18px 4px 8px}
+  .empty{grid-column:1/-1;text-align:center;color:var(--ink-faint);font-size:14px;padding:40px 0}
+  .card{
+    background:var(--surface);border-radius:var(--radius-md);box-shadow:var(--shadow-card);
+    overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;
+    transition:transform .18s ease, box-shadow .25s ease;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 26px 46px -24px rgba(20,24,31,.4)}
+  .card:active{transform:scale(.99)}
 
-/* ══════════════════════════════
-   HERO
-   ══════════════════════════════ */
-#hero {
-  padding: 32px 16px;
-  border-bottom: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-}
-#hero::before {
-  content: '';
-  position: absolute;
-  top: -60px; right: -80px;
-  width: 260px; height: 260px;
-  background: radial-gradient(circle, rgba(200,241,53,0.08) 0%, transparent 70%);
-  pointer-events: none;
-}
-#hero::after {
-  content: '';
-  position: absolute;
-  bottom: -40px; left: -60px;
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(124,108,255,0.07) 0%, transparent 70%);
-  pointer-events: none;
-}
+  .card__media{
+    position:relative;height:190px;
+    background:radial-gradient(120% 90% at 50% 18%, #FBFCFF 0%, var(--tile) 60%, var(--tile-2) 100%);
+    overflow:hidden;
+  }
+  .card__tag{
+    position:absolute;top:12px;left:12px;z-index:3;
+    font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    background:rgba(20,24,31,.9);color:#fff;padding:6px 9px;border-radius:8px;backdrop-filter:blur(4px);
+  }
+  .card__tag--hot{background:var(--coral);color:#fff}
 
-.hero-label {
-  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--accent); margin-bottom: 14px;
-  display: flex; align-items: center; gap: 8px;
-}
-.hero-label::before {
-  content: '';
-  width: 20px; height: 1px; background: var(--accent);
-}
+  /* ---------- card carousel (real product images) ---------- */
+  .carousel{position:absolute;inset:0}
+  .carousel-track{display:flex;width:100%;height:100%;transition:transform .35s ease}
+  .carousel-slide{flex:0 0 100%;width:100%;height:100%;object-fit:cover;display:block}
+  .carousel-arrow{
+    position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+    width:30px;height:30px;padding:0;border:none;border-radius:50%;
+    background:rgba(255,255,255,.92);color:var(--ink);display:grid;place-items:center;cursor:pointer;
+    box-shadow:var(--shadow-soft);opacity:.92;transition:opacity .15s ease, transform .1s ease;
+  }
+  .carousel-arrow svg{width:16px;height:16px}
+  .carousel-arrow.prev{left:8px}
+  .carousel-arrow.next{right:8px}
+  .carousel-arrow:active{transform:translateY(-50%) scale(.9)}
+  /* pointer devices: reveal on hover; touch devices keep them visible */
+  @media (hover:hover){
+    .carousel-arrow{opacity:0}
+    .card:hover .carousel-arrow{opacity:1}
+  }
+  .carousel-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:5px}
+  .carousel-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.65);box-shadow:0 1px 2px rgba(0,0,0,.25);cursor:pointer;transition:background .15s ease, transform .15s ease}
+  .carousel-dot.active{background:#fff;transform:scale(1.3)}
 
-.hero-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 32px; font-weight: 800;
-  letter-spacing: -1px; line-height: 1.05;
-  color: var(--text);
-  margin-bottom: 14px;
-}
-.hero-title span { color: var(--accent); }
+  .card__body{padding:16px 15px 15px;display:flex;flex-direction:column;flex:1}
+  .card__name{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1.1}
+  .card__variant{font-size:13px;color:var(--ink-soft);margin-top:3px}
+  .card__dim{font-family:'Space Mono',monospace;font-size:11.5px;font-weight:700;color:var(--ink-2);margin-top:12px;display:inline-flex;align-items:center;gap:6px;background:var(--tile);padding:6px 9px;border-radius:8px;align-self:flex-start}
+  .card__foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:16px}
+  .price{display:flex;flex-direction:column;line-height:1}
+  .price small{font-family:'Space Mono',monospace;font-size:9.5px;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+  .price b{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.01em}
+  .go{width:46px;height:46px;border-radius:50%;border:none;background:var(--ink);color:#fff;display:grid;place-items:center;flex:none;box-shadow:0 12px 20px -12px rgba(20,24,31,.8);transition:transform .15s ease,background .2s ease}
+  .card:hover .go{background:var(--coral);transform:rotate(-8deg)}
+  .go svg{width:18px;height:18px}
 
-.hero-desc {
-  font-size: 12px; color: var(--muted); line-height: 1.7;
-  max-width: 340px;
-}
+  /* ---------- footer ---------- */
+  .foot{margin:36px 2px 0;display:flex;flex-direction:column;gap:16px}
+  .foot__help{background:linear-gradient(160deg,#232B38 0%,#14181F 100%);border-radius:var(--radius-lg);padding:24px 22px;color:#fff;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+  .foot__help::before{content:"";position:absolute;top:-60px;right:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 40% 40%, rgba(250,107,91,.35), rgba(250,107,91,0) 70%)}
+  .foot__eyebrow{font-family:'Space Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#FF9C90}
+  .foot__help h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:23px;letter-spacing:-.02em;margin:10px 0 8px;position:relative}
+  .foot__help p{font-size:13.5px;line-height:1.5;color:#AEB6C4;max-width:32ch;position:relative}
+  .foot__help-actions{display:flex;gap:8px;margin-top:18px;position:relative}
+  .hbtn{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-family:'Inter';font-weight:600;font-size:13.5px;cursor:pointer;text-decoration:none;padding:13px 8px;border-radius:13px;white-space:nowrap;transition:transform .15s ease,background .2s ease}
+  .hbtn:active{transform:translateY(1px)}
+  .hbtn svg{width:17px;height:17px;flex:none}
+  .hbtn--wa{background:#fff;color:var(--ink)}
+  .hbtn--wa:hover{background:#F0F1F6}
+  .hbtn--wa svg{color:#25A455}
+  .hbtn--ig{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.16)}
+  .hbtn--ig:hover{background:rgba(255,255,255,.14)}
+  .foot__track{display:flex;gap:8px;margin-top:12px;position:relative;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:13px;padding:6px 6px 6px 14px;align-items:center}
+  .foot__track input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:'Space Mono',monospace;font-size:13px;padding:9px 0}
+  .foot__track input::placeholder{color:#7C8798}
+  .foot__track button{border:none;cursor:pointer;background:var(--coral);color:#fff;font-family:'Inter';font-weight:600;font-size:13px;padding:10px 14px;border-radius:10px;transition:background .2s ease}
+  .foot__track button:hover{background:var(--coral-ink)}
+  .foot__links{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:6px 12px}
+  .lcol__title{font-family:'Space Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px}
+  .lcol a{display:block;font-size:14px;color:var(--ink-2);text-decoration:none;padding:6px 0;transition:color .15s ease;width:fit-content}
+  .lcol a:hover{color:var(--coral-ink)}
+  .foot__base{padding:8px 12px 4px;display:flex;flex-direction:column;gap:14px}
+  .foot__legal{display:flex;gap:6px;flex-wrap:wrap;font-size:12.5px}
+  .foot__legal a{color:var(--ink-soft);text-decoration:none}
+  .foot__legal a:hover{color:var(--coral-ink)}
+  .foot__legal .sep{color:var(--ink-faint)}
+  .foot__copy{font-size:11.5px;color:var(--ink-faint);line-height:1.5}
+  .foot__copy .made{color:var(--ink-soft)}
 
-/* ══════════════════════════════
-   SECTION HEADER
-   ══════════════════════════════ */
-.section-header {
-  padding: 20px 16px 14px;
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-}
-.section-title {
-  font-family: 'Syne', sans-serif;
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--muted);
-}
-.section-count {
-  font-size: 10px; color: var(--muted);
-  border: 1px solid var(--border2); padding: 2px 8px; border-radius: 20px;
-}
+  /* focus visibility */
+  a:focus-visible,button:focus-visible,.chip:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:12px}
 
-/* ══════════════════════════════
-   FILTER BAR
-   ══════════════════════════════ */
-#filter-bar {
-  display: flex; align-items: center; gap: 6px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-#filter-bar::-webkit-scrollbar { display: none; }
-
-.filter-btn {
-  display: flex; align-items: center; gap: 5px;
-  padding: 5px 11px; border-radius: 20px; border: 1px solid var(--border2);
-  background: transparent; color: var(--muted);
-  font-family: 'DM Mono', monospace; font-size: 10px;
-  cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
-}
-.filter-btn:hover { color: var(--text); border-color: var(--border2); }
-.filter-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(200,241,53,0.06); }
-
-/* ══════════════════════════════
-   PRODUCT GRID
-   ══════════════════════════════ */
-#products {
-  padding: 12px 12px 100px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-/* ── Product Card ── */
-.product-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
-  text-decoration: none;
-  color: inherit;
-  display: flex; flex-direction: column;
-  position: relative;
-}
-.product-card:hover, .product-card:active {
-  border-color: var(--border2);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-}
-.product-card.featured {
-  grid-column: span 2;
-  flex-direction: row;
-}
-
-/* Card preview area */
-.card-preview {
-  aspect-ratio: 1;
-  background: var(--surface2);
-  display: flex; align-items: center; justify-content: center;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.product-card.featured .card-preview {
-  width: 140px; aspect-ratio: auto; height: 100%;
-  min-height: 120px;
-}
-
-/* corner marks on preview */
-.card-preview::before, .card-preview::after {
-  content: ''; position: absolute;
-  width: 10px; height: 10px;
-  border-color: rgba(200,241,53,0.25); border-style: solid;
-}
-.card-preview::before { top: 6px; left: 6px; border-width: 1.5px 0 0 1.5px; }
-.card-preview::after  { bottom: 6px; right: 6px; border-width: 0 1.5px 1.5px 0; }
-
-/* SVG shape in preview */
-.shape-wrap {
-  display: flex; align-items: center; justify-content: center;
-  width: 100%; height: 100%;
-}
-.shape-wrap svg { max-width: 70%; max-height: 70%; }
-
-/* Card tag (new / popular) */
-.card-tag {
-  position: absolute; top: 8px; right: 8px;
-  font-size: 9px; font-family: 'DM Mono', monospace; letter-spacing: 0.08em;
-  padding: 2px 7px; border-radius: 20px; text-transform: uppercase;
-}
-.card-tag.new { background: rgba(200,241,53,0.12); color: var(--accent); border: 1px solid rgba(200,241,53,0.25); }
-.card-tag.popular { background: rgba(124,108,255,0.12); color: var(--accent2); border: 1px solid rgba(124,108,255,0.25); }
-
-/* Card info */
-.card-info {
-  padding: 11px 12px 12px;
-  flex: 1; display: flex; flex-direction: column; gap: 4px;
-}
-.card-name {
-  font-family: 'Syne', sans-serif;
-  font-size: 13px; font-weight: 700;
-  color: var(--text); line-height: 1.2;
-}
-.card-sub {
-  font-size: 10px; color: var(--muted);
-}
-.card-size {
-  margin-top: 6px;
-  font-size: 10px; color: var(--accent);
-  display: flex; align-items: center; gap: 5px;
-}
-.card-size::before { content: '⌀'; opacity: 0.6; }
-
-.card-size-rect {
-  margin-top: 6px;
-  font-size: 10px; color: var(--accent);
-  display: flex; align-items: center; gap: 5px;
-}
-.card-size-rect::before { content: '▯'; opacity: 0.6; }
-
-.card-arrow {
-  position: absolute; bottom: 10px; right: 10px;
-  width: 22px; height: 22px;
-  border-radius: 50%; background: var(--border);
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s;
-}
-.product-card:hover .card-arrow { background: var(--accent); }
-.product-card:hover .card-arrow svg { color: #0c0c0f; }
-
-/* Featured special info */
-.product-card.featured .card-info { justify-content: center; }
-.product-card.featured .card-name { font-size: 15px; }
-
-
-/* ══════════════════════════════
-   MARQUEE
-   ══════════════════════════════ */
-.marquee-wrap {
-  overflow: hidden;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  padding: 8px 0;
-  background: var(--surface);
-  margin-bottom: 0;
-}
-.marquee-track {
-  display: flex; gap: 0; white-space: nowrap;
-  animation: marquee 18s linear infinite;
-}
-.marquee-item {
-  font-size: 10px; color: var(--muted); letter-spacing: 0.12em;
-  text-transform: uppercase; padding: 0 18px;
-  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-}
-.marquee-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--accent); opacity: 0.5; }
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-
-/* ══════════════════════════════
-   MAX WIDTH WRAPPER
-   ══════════════════════════════ */
-.page-wrap {
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  position: relative;
-}
-
-/* ══════════════════════════════
-   ANIMATIONS
-   ══════════════════════════════ */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.product-card {
-  animation: fadeUp 0.4s ease both;
-}
-.product-card:nth-child(1) { animation-delay: 0.05s; }
-.product-card:nth-child(2) { animation-delay: 0.10s; }
-.product-card:nth-child(3) { animation-delay: 0.15s; }
-.product-card:nth-child(4) { animation-delay: 0.20s; }
-.product-card:nth-child(5) { animation-delay: 0.25s; }
-.product-card:nth-child(6) { animation-delay: 0.30s; }
-.product-card:nth-child(7) { animation-delay: 0.35s; }
-.product-card:nth-child(8) { animation-delay: 0.40s; }
-
-/* Noise texture overlay on hero */
-#hero-noise {
-  position: absolute; inset: 0; pointer-events: none; z-index: 1;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 120px;
-}
-#hero > * { position: relative; z-index: 2; }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important}
+    .carousel-track{transition:none!important}
+  }
 </style>
 </head>
 <body>
+  <main class="phone" role="main">
 
-<div class="page-wrap">
+    <!-- HEADER -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="3" stroke="#fff" stroke-width="1.8"/><path d="M3 15l4.5-4.5 3.5 3.5 3-3L21 16" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="9" r="1.6" fill="#fff"/></svg>
+        </span>
+        <div>
+          <div class="brand__name">Pix2Prints</div>
+          <div class="brand__tag">Photo print studio</div>
+        </div>
+      </div>
+      <button class="cart" aria-label="Bag, 0 items">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-.85 10.2A2 2 0 0 1 15.16 20H8.84a2 2 0 0 1-1.99-1.8L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8V6.6a3 3 0 0 1 6 0V8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span class="cart__count">0</span>
+      </button>
+    </header>
 
-  <!-- ── Top branding bar ── -->
-  <div id="topbar">
-    <div class="brand">
-      <div class="brand-logo">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-          <rect x="1" y="1" width="16" height="16" rx="3" stroke="#0c0c0f" stroke-width="1.5"/>
-          <rect x="4.5" y="4.5" width="9" height="9" rx="1.5" stroke="#0c0c0f" stroke-width="1.5"/>
-          <line x1="4.5" y1="1" x2="4.5" y2="4.5" stroke="#0c0c0f" stroke-width="1.5"/>
-          <line x1="13.5" y1="1" x2="13.5" y2="4.5" stroke="#0c0c0f" stroke-width="1.5"/>
-          <line x1="4.5" y1="13.5" x2="4.5" y2="17" stroke="#0c0c0f" stroke-width="1.5"/>
-          <line x1="13.5" y1="13.5" x2="13.5" y2="17" stroke="#0c0c0f" stroke-width="1.5"/>
-        </svg>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero__blob" aria-hidden="true"></div>
+      <div class="hero__inner">
+        <span class="eyebrow">Your photo · your gift</span>
+        <h1 class="hero__title">Turn your photos into things you can hold.</h1>
+        <p class="hero__sub">Pick a product, drop in a photo, and fit it to the exact print area. We handle the printing and the finish.</p>
+
+        <div class="hero__cta">
+          <a class="btn btn--primary" href="#products">
+            <svg fill="#fff" viewBox="0 0 24 24"><path d="M15.716,4.354a8.031,8.031,0,1,0-2.7,13.138l3.58,3.581A3.164,3.164,0,0,0,21.073,16.6l-3.58-3.58A8.046,8.046,0,0,0,15.716,4.354ZM10.034,16.069A6.033,6.033,0,1,1,14.3,14.3,6,6,0,0,1,10.034,16.069Zm9.625,1.943a1.165,1.165,0,0,1-1.647,1.647l-3.186-3.186a8.214,8.214,0,0,0,.89-.757,8.214,8.214,0,0,0,.757-.89ZM11.035,14a1,1,0,0,1-1,1,4.972,4.972,0,0,1-4.966-4.965,1.014,1.014,0,0,1,1-1.017.984.984,0,0,1,1,.982v.035A2.968,2.968,0,0,0,10.035,13,1,1,0,0,1,11.035,14Z"/></svg>
+            Browse products
+          </a>
+        </div>
+
+        <div class="specs">
+          <span class="spec"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>300 DPI</span>
+          <span class="spec"><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>Print-ready</span>
+          <span class="spec"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Made to order · ~3 days</span>
+        </div>
       </div>
-      <div class="brand-text">
-        <span class="brand-product">Pix2Prints</span>
-        <span class="brand-company">Customized fridge magnets</span>
-      </div>
+    </section>
+
+    <!-- SEARCH -->
+    <div class="search">
+      <svg class="mag" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="search-input" type="search" placeholder="Search products" autocomplete="off" aria-label="Search products">
     </div>
-    <div class="topbar-right">
-      <span class="badge accent">Home Page</span>
+
+    <!-- EXPLORE -->
+    <div class="explore-head">
+      <h2>Explore</h2>
+      <span class="count" id="section-count"></span>
     </div>
-  </div>
 
-  <!-- ── Hero ── -->
-  <div id="hero">
-    <div id="hero-noise"></div>
-    <div class="hero-label">Welcome to Pix2Prints</div>
-    <h1 class="hero-title">Turn photos into<br><span>Memories.</span></h1>
-    <p class="hero-desc">Upload any photo and we'll print it on premium magnets, keychains, acrylics & more. Shipped fast, built to last.</p>
-  </div>
+    <!-- Category filter chips (rendered by catalog.js) -->
+    <div class="chips" id="filter-chips" role="group" aria-label="Filter by category"></div>
 
-  <!-- ── Marquee ── -->
-  <div class="marquee-wrap">
-    <div class="marquee-track">
-      <!-- repeated twice for seamless loop -->
-      <span class="marquee-item">Round Magnets <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Acrylic Keychains <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Polaroids <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Square Badges <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Mirror &amp; Opener <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Round Keychains <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Acrylic Magnets <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Photo Gifts <span class="marquee-dot"></span></span>
-      <!-- duplicate -->
-      <span class="marquee-item">Round Magnets <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Acrylic Keychains <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Polaroids <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Square Badges <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Mirror &amp; Opener <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Round Keychains <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Acrylic Magnets <span class="marquee-dot"></span></span>
-      <span class="marquee-item">Photo Gifts <span class="marquee-dot"></span></span>
-    </div>
-  </div>
+    <!-- Product grid (rendered by catalog.js) -->
+    <section class="grid" id="products" aria-label="Products"></section>
 
-  <!-- ── Section header ── -->
-  <div class="section-header">
-    <span class="section-title">All Products</span>
-    <!-- <span class="section-count">8 items</span> -->
-  </div>
-
-  <!-- ── Filter bar ── -->
-  <div id="filter-bar">
-    <button class="filter-btn active" onclick="filterProducts('all', this)">All</button>
-    <button class="filter-btn" onclick="filterProducts('magnet', this)">Magnets</button>
-    <button class="filter-btn" onclick="filterProducts('keychain', this)">Keychains</button>
-    <button class="filter-btn" onclick="filterProducts('acrylic', this)">Acrylic</button>
-    <button class="filter-btn" onclick="filterProducts('other', this)">Other</button>
-  </div>
-
-  <!-- ── Product Grid ── -->
-  <div id="products">
-
-    <!-- 1. Round Magnet/Badge (Big) -->
-    <a class="product-card featured" href="tool.html?d=58" data-category="magnet">
-      <div class="card-preview">
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="42" stroke="#c8f135" stroke-width="2"/>
-            <circle cx="50" cy="50" r="34" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.35)" stroke-width="1.5"/>
-            <circle cx="50" cy="50" r="10" fill="rgba(200,241,53,0.15)" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
-            <circle cx="50" cy="50" r="4" fill="rgba(200,241,53,0.5)"/>
-            <line x1="15" y1="50" x2="22" y2="50" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
-            <line x1="78" y1="50" x2="85" y2="50" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
-            <line x1="50" y1="15" x2="50" y2="22" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
-            <line x1="50" y1="78" x2="50" y2="85" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
-          </svg>
+    <!-- FOOTER -->
+    <footer class="foot">
+      <div class="foot__help">
+        <div class="foot__eyebrow">We're here</div>
+        <h3>Questions about your order?</h3>
+        <p>Chat with the studio — real people, quick replies. No account needed.</p>
+        <div class="foot__help-actions">
+          <a class="hbtn hbtn--wa" href="#">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.6 2 2.2 6.4 2.2 11.84c0 1.9.5 3.66 1.36 5.2L2 22l5.1-1.5a9.8 9.8 0 0 0 4.94 1.32h.01c5.44 0 9.84-4.4 9.84-9.84C21.9 6.4 17.48 2 12.04 2Zm5.76 13.9c-.24.68-1.4 1.32-1.94 1.36-.5.05-1.13.07-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.26-4.8-4.19-4.94-4.38-.14-.19-1.18-1.57-1.18-3s.75-2.13 1.02-2.42c.27-.29.58-.36.78-.36l.56.01c.18.01.42-.07.66.5.24.58.82 2 .9 2.15.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.14-.3.3-.13.59.17.29.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.35 1.46.29.14.46.12.63-.07.17-.19.73-.85.92-1.14.19-.29.39-.24.65-.14.27.09 1.68.79 1.97.94.29.14.48.21.55.33.07.12.07.69-.17 1.37Z"/></svg>
+            WhatsApp
+          </a>
+          <a class="hbtn hbtn--ig" href="#">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.6" stroke="currentColor" stroke-width="1.8"/><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor"/></svg>
+            Instagram
+          </a>
+        </div>
+        <div class="foot__track">
+          <input type="text" placeholder="Order ID · e.g. P2P-4821" aria-label="Track your order by ID">
+          <button type="button">Track</button>
         </div>
       </div>
-      <div class="card-info">
-        <span class="card-name">Round Magnet / Badge</span>
-        <span class="card-sub">Big size</span>
-        <span class="card-size" style="--before:'⌀'">58 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
-        </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
 
-    <!-- 2. Round Magnet/Badge (Small) -->
-     <a class="product-card featured" href="tool.html?d=44" data-category="magnet">
-      <div class="card-preview">
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 100" fill="none">
-            <circle cx="50" cy="50" r="30" stroke="#c8f135" stroke-width="2"/>
-            <circle cx="50" cy="50" r="22" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.35)" stroke-width="1.5"/>
-            <circle cx="50" cy="50" r="8" fill="rgba(200,241,53,0.15)" stroke="rgba(200,241,53,0.5)" stroke-width="1.5"/>
-            <circle cx="50" cy="50" r="3" fill="rgba(200,241,53,0.5)"/>
-          </svg>
+      <nav class="foot__links" aria-label="Footer">
+        <div class="lcol">
+          <div class="lcol__title">Products</div>
+          <a href="#">Magnets</a>
+          <a href="#">Keychains</a>
+          <a href="#">Acrylic</a>
+          <a href="#">Everything else</a>
         </div>
-      </div>
-      <div class="card-info">
-        <span class="card-name">Round Magnet / Badge</span>
-        <span class="card-sub">Small size</span>
-        <span class="card-size" style="--before:'⌀'">44 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
+        <div class="lcol">
+          <div class="lcol__title">Studio</div>
+          <a href="#">How it works</a>
+          <a href="#">Bulk &amp; corporate gifts</a>
+          <a href="#">Track your order</a>
+          <a href="#">Print quality &amp; DPI</a>
         </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
+      </nav>
 
-    <!-- 3. Round Keychain (Small) -->
-     <a class="product-card featured" href="tool.html?d=44" data-category="keychain">
-      <div class="card-preview">
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 120" fill="none">
-            <circle cx="50" cy="30" r="9" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
-            <circle cx="50" cy="30" r="4" stroke="rgba(200,241,53,0.4)" stroke-width="1.5"/>
-            <circle cx="50" cy="72" r="33" stroke="rgba(200,241,53,1)" stroke-width="2"/>
-            <circle cx="50" cy="72" r="25" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.35)" stroke-width="1.5"/>
-            
-          </svg>
+      <div class="foot__base">
+        <div class="foot__legal">
+          <a href="#">Terms</a><span class="sep">·</span>
+          <a href="#">Privacy</a><span class="sep">·</span>
+          <a href="#">Refunds &amp; shipping</a>
         </div>
+        <div class="foot__copy">© 2026 Pix2Prints. <span class="made">Printed &amp; shipped from Mumbai.</span></div>
       </div>
-      <div class="card-info">
-        <span class="card-name">Round Keychain</span>
-        <span class="card-sub">Small size</span>
-        <span class="card-size" style="--before:'⌀'">44 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
-        </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
+    </footer>
+  </main>
 
-    <!-- 4. Square Magnet/Badge -->
-     <a class="product-card featured" href="tool.html?w=50&h=50" data-category="magnet">
-      <div class="card-preview">
-        <span class="card-tag popular">Popular</span>
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 100" fill="none">
-            <rect x="18" y="18" width="64" height="64" rx="6" stroke="#c8f135" stroke-width="2"/>
-            <rect x="28" y="28" width="44" height="44" rx="4" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
-            <rect x="44" y="44" width="12" height="12" rx="2" fill="rgba(200,241,53,0.3)" stroke="rgba(200,241,53,0.5)" stroke-width="1"/>
-          </svg>
-        </div>
-      </div>
-      <div class="card-info">
-        <span class="card-name">Square Magnet</span>
-        <span class="card-sub">Standard size</span>
-        <span class="card-size-rect" style="--before:'▯'">50 × 50 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
-        </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
-
-    <!-- 5. Acrylic Magnet -->
-    <a class="product-card featured" href="tool.html?w=70&h=95" data-category="acrylic magnet">
-      <div class="card-preview">
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 140" fill="none" xmlns="http://w3.org">
-          <rect x="16" y="16" width="68" height="108" rx="10" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
-          <rect x="22" y="22" width="56" height="96" rx="7" fill="rgba(200,241,53,0.06)"/>
-          <rect x="30" y="30" width="40" height="80" rx="5" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
-          <rect x="46" y="66" width="8" height="8" rx="2" fill="rgba(200,241,53,0.35)"/>
-        </svg>
-        </div>
-      </div>
-      <div class="card-info">
-        <span class="card-name">Acrylic Magnet</span>
-        <span class="card-sub">Premium finish</span>
-        <span class="card-size-rect" style="--before:'▯'">70 × 95 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
-        </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
-
-    <!-- 6. Acrylic Keychain -->
-    <a class="product-card featured" href="tool.html?w=30&h=44&q=2" data-category="acrylic keychain">
-      <div class="card-preview">
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 120" fill="none">
-            <circle cx="47" cy="24" r="9" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
-            <circle cx="47" cy="24" r="4" stroke="rgba(200,241,53,0.4)" stroke-width="1.5"/>
-            <!-- acrylic body rounded rect -->
-            <rect x="17" y="33" width="60" height="76" rx="10" stroke="rgba(200,241,53,0.6)" stroke-width="2.5"/>
-            <rect x="24" y="40" width="46" height="62" rx="7" fill="rgba(200,241,53,0.06)"/>
-            <rect x="34" y="55" width="26" height="32" rx="5" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
-          </svg>
-        </div>
-      </div>
-      <div class="card-info">
-        <span class="card-name">Acrylic Keychain</span>
-        <span class="card-sub">Premium finish</span>
-        <span class="card-size-rect" style="--before:'▯'">30 × 44 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
-        </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
-
-    <!-- 7. Polaroid -->
-    <a class="product-card featured" href="tool.html?w=70&h=70" data-category="other">
-      <div class="card-preview">
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 120" fill="none">
-            <rect x="18" y="10" width="64" height="80" rx="3" stroke="#c8f135" stroke-width="2"/>
-            <rect x="24" y="16" width="52" height="52" rx="2" fill="rgba(200,241,53,0.07)" stroke="rgba(200,241,53,0.3)" stroke-width="1.5"/>
-            <line x1="24" y1="16" x2="30" y2="16" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="24" y1="16" x2="24" y2="22" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="76" y1="16" x2="70" y2="16" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="76" y1="16" x2="76" y2="22" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="24" y1="68" x2="24" y2="62" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="24" y1="68" x2="30" y2="68" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="76" y1="68" x2="70" y2="68" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="76" y1="68" x2="76" y2="62" stroke="rgba(200,241,53,0.6)" stroke-width="1.5"/>
-            <line x1="30" y1="83" x2="70" y2="83" stroke="rgba(200,241,53,0.2)" stroke-width="1"/>
-          </svg>
-        </div>
-      </div>
-      <div class="card-info">
-        <span class="card-name">Polaroid</span>
-        <span class="card-sub">Classic style</span>
-        <span class="card-size-rect" style="--before:'▯'">70 × 70 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
-        </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
-
-    <!-- 8. Mirror & Opener -->
-    <a class="product-card featured" href="tool.html?d=58" data-category="other">
-      <div class="card-preview">
-        <div class="shape-wrap">
-          <svg viewBox="0 0 100 120" fill="none">
-            <circle cx="50" cy="45" r="30" stroke="rgba(200,241,53,0.6)" stroke-width="2"/>
-            <circle cx="50" cy="45" r="24" fill="rgba(200,241,53,0.05)" stroke="rgba(200,241,53,0.25)" stroke-width="1.5"/>
-            <circle cx="50" cy="45" r="10" fill="rgba(200,241,53,0.08)" stroke="rgba(200,241,53,0.3)" stroke-width="1"/>
-            <rect x="36" y="76" width="28" height="14" rx="4" stroke="rgba(200,241,53,0.45)" stroke-width="1.5"/>
-            <rect x="40" y="80" width="20" height="6" rx="2" fill="rgba(200,241,53,0.1)" stroke="rgba(200,241,53,0.25)" stroke-width="1"/>
-          </svg>
-        </div>
-      </div>
-      <div class="card-info">
-        <span class="card-name">Mirror & Opener</span>
-        <span class="card-sub">Dual function</span>
-        <span class="card-size" style="--before:'⌀'">58 mm</span>
-        <div style="margin-top:8px; font-size:10px; color:var(--muted); line-height:1.6">
-          Perfect for fridge magnets, pin badges, and promotional giveaways.
-        </div>
-      </div>
-      <div class="card-arrow">
-        <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 7h8M7 3l4 4-4 4"/>
-        </svg>
-      </div>
-    </a>
-
-  </div>
-
-</div><!-- /page-wrap -->
-
-<script>
-// Filter logic
-function filterProducts(cat, btn) {
-  // Update active filter button
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  document.querySelectorAll('.product-card').forEach(card => {
-    const cats = card.dataset.category || '';
-    if (cat === 'all' || cats.includes(cat)) {
-      card.style.display = '';
-    } else {
-      card.style.display = 'none';
-    }
-  });
-
-  // Re-manage featured spanning when filtering
-  const featured = document.querySelector('.product-card.featured');
-  if (featured && featured.style.display !== 'none') {
-    featured.style.gridColumn = 'span 2';
-  }
-}
-</script>
-
+  <!-- Config first (plain global, file:// safe), then the catalog renderer -->
+  <script src="config.js"></script>
+  <script src="catalog.js"></script>
 </body>
 </html>

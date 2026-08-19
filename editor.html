@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pix2Prints — Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface-base:#E6EAF2; --surface-sunken:#DCE1EC; --surface-raised:#FFFFFF; --surface-invert:#232B38;
+  --text-strong:#1E2733; --text-body:#3A4453; --text-muted:#9AA3B4; --text-onDark:#FFFFFF;
+  --accent:#EF5350; --accent-soft:#FDE7E6;
+  --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:24px; --r-pill:999px;
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
+  --shadow-card:0 18px 40px rgba(120,135,165,0.22);
+  --shadow-btn:0 8px 18px rgba(35,43,56,0.28);
+  --shadow-inset:inset 3px 3px 7px rgba(163,177,198,0.55), inset -3px -3px 7px rgba(255,255,255,0.9);
+  --frame-w-px:300px; --frame-h-px:300px;
+}
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ width:100%; height:100%; }
+body{
+  background:var(--surface-base); color:var(--text-body);
+  font-family:'Inter',system-ui,sans-serif; font-size:14px;
+  overscroll-behavior:none; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased;
+}
+
+/* ── App shell: fixed full viewport, frame never shifts ── */
+#app{ position:fixed; inset:0; max-width:520px; margin:0 auto; display:flex; flex-direction:column; background:var(--surface-base); }
+
+/* ── Top bar ── */
+#topbar{ flex-shrink:0; display:flex; align-items:center; gap:var(--s-3); padding:var(--s-3) var(--s-4); }
+.icon-btn{
+  width:40px; height:40px; border-radius:var(--r-sm); border:none; cursor:pointer;
+  display:grid; place-items:center; background:var(--surface-raised); color:var(--text-strong);
+  box-shadow:var(--shadow-card); flex-shrink:0; text-decoration:none;
+}
+.icon-btn svg{ width:19px; height:19px; }
+.icon-btn.invert{ background:var(--surface-invert); color:#fff; box-shadow:var(--shadow-btn); }
+.top-title{ flex:1; min-width:0; }
+.top-title .name{ font-family:'Poppins',sans-serif; font-weight:700; font-size:15px; color:var(--text-strong); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.top-title .spec{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); margin-top:2px; }
+#load-btn{
+  display:flex; align-items:center; gap:6px; padding:0 14px; height:40px; border-radius:var(--r-sm);
+  background:var(--surface-invert); color:#fff; border:none; cursor:pointer; box-shadow:var(--shadow-btn);
+  font-family:'Inter',sans-serif; font-size:13px; font-weight:600; flex-shrink:0;
+}
+#load-btn svg{ width:15px; height:15px; }
+
+/* ── Canvas zone ── */
+#canvas-zone{ flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+
+/* Guide bar */
+#guide-bar{ flex-shrink:0; display:flex; align-items:center; gap:var(--s-2); padding:var(--s-2) var(--s-4) 0; }
+.guide-btn{
+  display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:var(--r-pill);
+  background:var(--surface-raised); color:var(--text-body); border:none; cursor:pointer;
+  box-shadow:var(--shadow-card); font-family:'Inter',sans-serif; font-size:12px; font-weight:600;
+  white-space:nowrap; transition:background .15s,color .15s;
+}
+.guide-btn svg{ width:13px; height:13px; }
+.guide-btn.active{ background:var(--surface-invert); color:#fff; }
+.guide-spacer{ flex:1; }
+.img-status{ display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); min-width:0; }
+.img-status .dot{ width:7px; height:7px; border-radius:50%; background:var(--text-muted); flex-shrink:0; }
+.img-status .dot.on{ background:var(--accent); }
+.img-status .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px; }
+
+/* Stage well */
+#stage{ flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:var(--s-4); }
+#well{
+  flex:1; height:100%; border-radius:var(--r-lg); background:var(--surface-sunken);
+  box-shadow:var(--shadow-inset); display:flex; align-items:center; justify-content:center; padding:20px; overflow:hidden;
+}
+
+/* Frame */
+#frame-outer{ position:relative; width:var(--frame-w-px); height:var(--frame-h-px); flex-shrink:0; }
+.frame-slot{ position:absolute; top:0; overflow:hidden; background:#fff; cursor:grab; box-shadow:0 10px 26px rgba(40,50,70,0.18); transition:outline .15s; }
+.frame-slot:active{ cursor:grabbing; }
+.frame-slot.active-slot{ outline:2.5px solid var(--accent); outline-offset:0; }
+.slot-layer{ position:absolute; top:0; left:0; transform-origin:center center; will-change:transform; pointer-events:none; user-select:none; }
+.slot-layer img{ display:block; width:100%; height:100%; object-fit:fill; pointer-events:none; -webkit-user-drag:none; }
+.slot-ghost{ position:absolute; top:0; transform-origin:center center; pointer-events:none; will-change:transform; opacity:0; transition:opacity .2s; z-index:0; filter:blur(2px) saturate(0.65); overflow:visible; }
+.slot-ghost img{ display:block; width:100%; height:100%; object-fit:fill; -webkit-user-drag:none; }
+
+/* corner marks (rect) */
+.slot-corner{ position:absolute; width:16px; height:16px; border-color:var(--surface-invert); border-style:solid; z-index:10; pointer-events:none; }
+/* grid + cross */
+.slot-grid-overlay{ position:absolute; inset:0; pointer-events:none; z-index:5; opacity:0.16; display:none;
+  background-image:linear-gradient(var(--surface-invert) 1px,transparent 1px),linear-gradient(90deg,var(--surface-invert) 1px,transparent 1px);
+  background-size:25% 25%; }
+.slot-grid-overlay.visible{ display:block; }
+.slot-center-cross{ position:absolute; inset:0; pointer-events:none; z-index:6; display:none; }
+.slot-center-cross.visible{ display:block; }
+.slot-center-cross::before{ content:''; position:absolute; left:50%; top:0; width:1px; height:100%; background:var(--accent); opacity:.6; transform:translateX(-50%); }
+.slot-center-cross::after{ content:''; position:absolute; top:50%; left:0; height:1px; width:100%; background:var(--accent); opacity:.6; transform:translateY(-50%); }
+/* drop hint */
+.slot-hint{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; pointer-events:none; z-index:8; padding:8px; text-align:center; }
+.slot-hint .ic{ width:34px; height:34px; border:1.5px dashed var(--text-muted); border-radius:var(--r-xs); display:grid; place-items:center; }
+.slot-hint .ic svg{ width:16px; height:16px; color:var(--text-muted); }
+.slot-hint p{ font-size:11px; color:var(--text-muted); line-height:1.5; }
+/* split badge + divider */
+.slot-badge{ position:absolute; top:8px; left:8px; width:20px; height:20px; border-radius:50%; background:var(--accent); color:#fff; font-family:'JetBrains Mono',monospace; font-size:11px; display:grid; place-items:center; z-index:15; pointer-events:none; }
+.frame-divider{ position:absolute; top:0; left:50%; width:2px; height:100%; background:var(--accent); opacity:.5; z-index:20; transform:translateX(-50%); pointer-events:none; }
+/* circle ring */
+.circle-ring{ position:absolute; inset:0; border-radius:50%; border:2px solid var(--surface-invert); z-index:10; pointer-events:none; }
+
+/* ── Bottom controls ── */
+#controls{ flex-shrink:0; background:var(--surface-raised); border-radius:var(--r-lg) var(--r-lg) 0 0; box-shadow:0 -12px 32px rgba(120,135,165,0.20); display:flex; flex-direction:column; height:212px; overflow:hidden; }
+#panel-wrap{ flex:1; overflow-y:auto; }
+.panel{ display:none; padding:var(--s-4) var(--s-5) var(--s-3); }
+.panel.active{ display:block; }
+.panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--s-4); }
+.panel-title{ font-family:'Poppins',sans-serif; font-weight:700; font-size:14px; color:var(--text-strong); }
+.reset-btn{ font-family:'Inter',sans-serif; font-size:12px; font-weight:500; color:var(--text-muted); background:var(--surface-base); border:none; border-radius:var(--r-pill); padding:5px 12px; cursor:pointer; transition:color .12s; }
+.reset-btn:hover{ color:var(--accent); }
+.reset-btn:active{ transform:scale(0.95); }
+
+.slider-row{ display:flex; align-items:center; gap:var(--s-3); margin-bottom:var(--s-3); }
+.slider-name{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-muted); min-width:16px; flex-shrink:0; }
+input[type=range]{ flex:1; -webkit-appearance:none; appearance:none; height:6px; border-radius:var(--r-pill); background:var(--surface-sunken); box-shadow:var(--shadow-inset); outline:none; cursor:pointer; }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:22px; height:22px; border-radius:50%; background:var(--surface-invert); border:3px solid #fff; box-shadow:var(--shadow-btn); cursor:pointer; transition:transform .1s; }
+input[type=range]:active::-webkit-slider-thumb{ transform:scale(1.12); background:var(--accent); }
+input[type=range]::-moz-range-thumb{ width:22px; height:22px; border-radius:50%; background:var(--surface-invert); border:3px solid #fff; box-shadow:var(--shadow-btn); cursor:pointer; }
+.slider-val{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-strong); min-width:48px; text-align:right; flex-shrink:0; }
+.link-btn{ width:26px; height:26px; border-radius:var(--r-xs); border:none; background:var(--surface-base); color:var(--text-muted); cursor:pointer; display:grid; place-items:center; flex-shrink:0; transition:background .15s,color .15s; }
+.link-btn.active{ background:var(--accent-soft); color:var(--accent); }
+.link-btn svg{ width:13px; height:13px; }
+.hint-line{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+.toggle-row{ display:flex; gap:var(--s-2); }
+.toggle-btn{ flex:1; padding:11px 0; background:var(--surface-base); border:none; border-radius:var(--r-sm); color:var(--text-body); font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:background .15s,color .15s; }
+.toggle-btn.active{ background:var(--surface-invert); color:#fff; }
+
+/* Upload panel */
+.meta{ display:grid; grid-template-columns:auto 1fr; gap:6px 14px; margin-bottom:var(--s-4); }
+.meta dt{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); }
+.meta dd{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-strong); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.meta dd.warn{ color:var(--accent); }
+.btn-primary{ width:100%; padding:14px; border-radius:var(--r-sm); border:none; background:var(--surface-invert); color:#fff; font-family:'Poppins',sans-serif; font-size:14px; font-weight:700; cursor:pointer; box-shadow:var(--shadow-btn); transition:transform .1s,opacity .15s; }
+.btn-primary:active{ transform:scale(0.98); }
+.btn-primary:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* Tab bar */
+#tab-bar{ display:flex; flex-shrink:0; border-top:1px solid var(--surface-base); }
+.tab-btn{ flex:1; padding:9px 2px; background:transparent; border:none; border-top:2px solid transparent; margin-top:-1px; color:var(--text-muted); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; font-family:'Inter',sans-serif; font-size:10px; font-weight:600; transition:color .12s; }
+.tab-btn svg{ width:17px; height:17px; opacity:.5; transition:opacity .12s; }
+.tab-btn.active{ color:var(--accent); border-top-color:var(--accent); }
+.tab-btn.active svg{ opacity:1; }
+
+/* ── Modal ── */
+.overlay{ position:fixed; inset:0; z-index:300; background:rgba(30,39,51,0.45); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:var(--s-4); }
+.overlay.show{ display:flex; }
+.modal{ width:100%; max-width:400px; background:var(--surface-raised); border-radius:var(--r-lg); box-shadow:var(--shadow-card); padding:var(--s-6) var(--s-5); animation:pop .2s ease; }
+@keyframes pop{ from{ opacity:0; transform:translateY(10px) scale(.98); } to{ opacity:1; transform:none; } }
+.modal h2{ font-family:'Poppins',sans-serif; font-weight:800; font-size:20px; color:var(--text-strong); letter-spacing:-0.01em; }
+.modal .lede{ font-size:13px; color:var(--text-muted); margin-top:6px; margin-bottom:var(--s-5); }
+.field{ margin-bottom:var(--s-4); }
+.field label{ display:block; font-size:12px; font-weight:600; color:var(--text-body); margin-bottom:6px; }
+.field input{ width:100%; padding:13px var(--s-4); border-radius:var(--r-sm); border:1.5px solid transparent; background:var(--surface-base); font-family:'Inter',sans-serif; font-size:15px; color:var(--text-strong); outline:none; transition:border-color .15s; }
+.field input:focus{ border-color:var(--surface-invert); }
+.field input.invalid{ border-color:var(--accent); }
+.field .err{ font-size:11px; color:var(--accent); margin-top:5px; min-height:14px; }
+.modal-actions{ display:flex; gap:var(--s-3); margin-top:var(--s-5); }
+.btn-ghost{ flex:1; padding:13px; border-radius:var(--r-sm); border:none; background:var(--surface-base); color:var(--text-body); font-family:'Inter',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+.modal-actions .btn-primary{ flex:1.4; }
+
+/* ── Product not found ── */
+#notfound{ position:fixed; inset:0; z-index:400; display:none; align-items:center; justify-content:center; padding:var(--s-5); background:var(--surface-base); }
+#notfound.show{ display:flex; }
+.nf-card{ text-align:center; max-width:360px; background:var(--surface-raised); border-radius:var(--r-lg); box-shadow:var(--shadow-card); padding:var(--s-6) var(--s-5); }
+.nf-card .mark{ width:56px; height:56px; margin:0 auto var(--s-4); border-radius:var(--r-md); background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; }
+.nf-card .mark svg{ width:26px; height:26px; }
+.nf-card h2{ font-family:'Poppins',sans-serif; font-weight:800; font-size:22px; color:var(--text-strong); }
+.nf-card p{ font-size:14px; color:var(--text-muted); margin:var(--s-2) 0 var(--s-5); }
+.nf-card a{ display:inline-block; padding:12px 22px; border-radius:var(--r-sm); background:var(--surface-invert); color:#fff; text-decoration:none; font-family:'Poppins',sans-serif; font-weight:700; font-size:14px; box-shadow:var(--shadow-btn); }
+
+/* ── Toast ── */
+#toast{ position:fixed; left:50%; bottom:calc(212px + 20px); transform:translateX(-50%) translateY(14px); z-index:350;
+  display:flex; align-items:center; gap:8px; padding:11px 16px; border-radius:var(--r-md);
+  background:var(--surface-invert); color:#fff; font-size:13px; box-shadow:0 12px 32px rgba(30,39,51,0.4);
+  opacity:0; pointer-events:none; transition:opacity .22s,transform .22s; max-width:90%; }
+#toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+#toast.success{ background:#1f7a4d; }
+#toast.error{ background:var(--accent); }
+#toast.loading{ background:var(--surface-invert); }
+#toast .ic{ font-size:14px; flex-shrink:0; }
+#toast .msg{ line-height:1.35; }
+
+#file-input{ display:none; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <a class="icon-btn" href="index.html" aria-label="Back to catalog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+    <div class="top-title">
+      <div class="name" id="top-name">Editor</div>
+      <div class="spec" id="top-spec"></div>
+    </div>
+    <button id="load-btn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Photo
+    </button>
+  </div>
+
+  <!-- Canvas zone -->
+  <div id="canvas-zone">
+    <div id="guide-bar">
+      <button class="guide-btn" id="gb-grid" type="button">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x=".75" y=".75" width="12.5" height="12.5" rx="1"/><line x1="4.67" y1=".75" x2="4.67" y2="13.25"/><line x1="9.33" y1=".75" x2="9.33" y2="13.25"/><line x1=".75" y1="4.67" x2="13.25" y2="4.67"/><line x1=".75" y1="9.33" x2="13.25" y2="9.33"/></svg>
+        Grid
+      </button>
+      <button class="guide-btn" id="gb-cross" type="button">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/><circle cx="7" cy="7" r="1.4" fill="currentColor" stroke="none"/></svg>
+        Center
+      </button>
+      <span class="guide-spacer"></span>
+      <span class="img-status"><span class="dot" id="status-dot"></span><span class="nm" id="img-name">no photo</span></span>
+    </div>
+
+    <div id="stage">
+      <div id="well">
+        <div id="frame-outer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom controls -->
+  <div id="controls">
+    <div id="panel-wrap">
+
+      <div class="panel active" id="panel-pos">
+        <div class="panel-head"><span class="panel-title">Position</span><button class="reset-btn" id="reset-pos" type="button">Reset</button></div>
+        <div class="slider-row"><span class="slider-name">X</span><input type="range" id="tx" min="-600" max="600" value="0" step="1"><span class="slider-val" id="tx-val">0px</span></div>
+        <div class="slider-row" style="margin-bottom:4px"><span class="slider-name">Y</span><input type="range" id="ty" min="-600" max="600" value="0" step="1"><span class="slider-val" id="ty-val">0px</span></div>
+        <p class="hint-line">Or drag the photo on the canvas.</p>
+      </div>
+
+      <div class="panel" id="panel-scale">
+        <div class="panel-head"><span class="panel-title">Scale</span><button class="reset-btn" id="reset-scale" type="button">Reset</button></div>
+        <div class="slider-row"><span class="slider-name">W</span><input type="range" id="sw" min="10" max="600" value="100" step="1"><span class="slider-val" id="sw-val">100%</span>
+          <button class="link-btn active" id="link-scale" type="button" title="Link width & height" aria-pressed="true">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4H3a2 2 0 000 4h2"/><path d="M9 4h2a2 2 0 010 4H9"/><line x1="5" y1="7" x2="9" y2="7"/></svg>
+          </button>
+        </div>
+        <div class="slider-row" style="margin-bottom:0"><span class="slider-name">H</span><input type="range" id="sh" min="10" max="600" value="100" step="1"><span class="slider-val" id="sh-val">100%</span><span style="width:26px;flex-shrink:0"></span></div>
+      </div>
+
+      <div class="panel" id="panel-rot">
+        <div class="panel-head"><span class="panel-title">Rotation</span><button class="reset-btn" id="reset-rot" type="button">Reset</button></div>
+        <div class="slider-row" style="margin-bottom:0"><span class="slider-name">&deg;</span><input type="range" id="rot" min="-180" max="180" value="0" step="1"><span class="slider-val" id="rot-val">0&deg;</span></div>
+      </div>
+
+      <div class="panel" id="panel-flip">
+        <div class="panel-head"><span class="panel-title">Flip</span><button class="reset-btn" id="reset-flip" type="button">Reset</button></div>
+        <div class="toggle-row">
+          <button class="toggle-btn" id="flip-h" type="button">Horizontal</button>
+          <button class="toggle-btn" id="flip-v" type="button">Vertical</button>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-upload">
+        <div class="panel-head"><span class="panel-title">Upload</span><button class="reset-btn" id="reset-all" type="button">Reset all</button></div>
+        <dl class="meta">
+          <dt>Output</dt><dd id="meta-px">—</dd>
+          <dt>Photos</dt><dd id="meta-imgs">—</dd>
+        </dl>
+        <button class="btn-primary" id="upload-btn" type="button">Upload print file</button>
+      </div>
+
+    </div>
+
+    <div id="tab-bar">
+      <button class="tab-btn active" data-panel="pos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2.5"/><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/></svg>Position</button>
+      <button class="tab-btn" data-panel="scale" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>Scale</button>
+      <button class="tab-btn" data-panel="rot" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 11-.57-8.38"/></svg>Rotate</button>
+      <button class="tab-btn" data-panel="flip" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3H5a2 2 0 00-2 2v14a2 2 0 002 2h3"/><path d="M16 3h3a2 2 0 012 2v14a2 2 0 01-2 2h-3"/><line x1="12" y1="3" x2="12" y2="21"/></svg>Flip</button>
+      <button class="tab-btn" data-panel="upload" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer details modal -->
+<div class="overlay" id="details-overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="details-title">
+    <h2 id="details-title">Your details</h2>
+    <p class="lede">So we can match your print file to your order. We only use this to reach you about this print.</p>
+    <div class="field">
+      <label for="cust-name">Name</label>
+      <input id="cust-name" type="text" autocomplete="name" placeholder="e.g. Rahul Sharma" inputmode="text">
+      <div class="err" id="name-err"></div>
+    </div>
+    <div class="field">
+      <label for="cust-mobile">Mobile number</label>
+      <input id="cust-mobile" type="tel" autocomplete="tel" placeholder="10-digit Indian mobile" inputmode="tel">
+      <div class="err" id="mobile-err"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="details-cancel" type="button">Cancel</button>
+      <button class="btn-primary" id="details-confirm" type="button" disabled>Upload now</button>
+    </div>
+  </div>
+</div>
+
+<!-- Product not found -->
+<div id="notfound">
+  <div class="nf-card">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor"/></svg></div>
+    <h2>Product not found</h2>
+    <p id="nf-msg">We couldn't find that product. It may have been renamed or removed.</p>
+    <a href="index.html">Back to catalog</a>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*">
+<div id="toast"><span class="ic" id="toast-ic"></span><span class="msg" id="toast-msg"></span></div>
+<canvas id="export-canvas" style="display:none"></canvas>
+
+<!-- Config first (plain global, file:// safe), then editor logic -->
+<script src="config.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>
