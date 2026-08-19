@@ -38,17 +38,11 @@
     return cur + p.price;
   }
 
-  /* ── Category label lookup ─────────────────────────────────────────────── */
-  function categoryLabel(id) {
-    var found = (CFG.categories || []).find(function (c) { return c.id === id; });
-    return found ? found.label : id;
-  }
 
   /* ── Media tag: explicit badge → Split → category label ────────────────── */
   function tagInfo(p) {
     if (p.badge) return { text: p.badge, hot: true };
-    if (p.quantity === 2) return { text: "Split", hot: true };
-    return { text: categoryLabel(p.category), hot: false };
+    return { text: null, hot: false };
   }
 
   /* ── Images for a card: per-product override → global default → preview ── */
@@ -111,7 +105,7 @@
 
     a.innerHTML =
       '<div class="card__media">' +
-        '<span class="card__tag' + (tag.hot ? " card__tag--hot" : "") + '">' + tag.text + '</span>' +
+        (tag.text && '<span class="card__tag' + (tag.hot ? " card__tag--hot" : "") + '">' + tag.text + '</span>') +
         carouselMarkup(p) +
       '</div>' +
       '<div class="card__body">' +
