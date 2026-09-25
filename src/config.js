@@ -1,26 +1,24 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    Pix2Prints — central configuration
    ---------------------------------------------------------------------------
-   Loaded as a PLAIN classic script (no type="module", no fetch) so it works
-   identically on the GitHub Pages HTTPS origin and when opened via file://.
-   Both the storefront (catalog.js) and the editor (editor.js) read the single
-   global assigned here: window.PIX2PRINTS.  (TRD §4)
+   Ported from the original plain-JS `window.PIX2PRINTS` global into an ES
+   module. Both the Catalog page and the Editor page import the single
+   default export below.
 
-   Adding a product is a config change only — no storefront or editor code
-   change is required.  (TRD §6.3)
+   Adding a product is a config change only — no page component change is
+   required.
    ═══════════════════════════════════════════════════════════════════════════ */
-window.PIX2PRINTS = {
+const PIX2PRINTS = {
 
   /* ── App config — swappable per environment at deploy time ──────────────
-     The upload endpoint is NEVER read from the URL. It must be an https://
-     URL: GitHub Pages serves over HTTPS and a page cannot POST to an http://
-     endpoint (mixed content is blocked). (TRD §9, §14.1)                    */
+     The upload endpoint must be an https:// URL: a page served over HTTPS
+     cannot POST to an http:// endpoint (mixed content is blocked).          */
   app: {
     uploadEndpoint: "https://api.example.com/uploads",
     dpi: 300,
 
     /* Currency symbol prefixed to every product price. */
-    currency: "\u20B9",
+    currency: "₹",
 
     /* Default images shown in each product card's carousel. A product may
        override these with its own `images: [...]` array. Used for display
@@ -39,10 +37,12 @@ window.PIX2PRINTS = {
     { id: "other",     label: "Other"     }
   ],
 
-  /* ── Product catalog. Array order = display order. (TRD §6.1, §6.2) ──────
+  /* ── Product catalog. Array order = display order. ────────────────────────
      shape: "circle" -> diameterMm ;  "rect" -> widthMm × heightMm
-     quantity: 1, or 2 for a split product (two independent halves, rect only,
-     each half = widthMm / quantity wide at full heightMm).
+     quantity: 1, or 2 for a front+back product (rect only). Two photos are
+     printed side by side on one sheet, then the print is folded in half so
+     one becomes the front and the other the back of the finished item.
+     Each half = widthMm / quantity wide at full heightMm.
      price: number in the currency above (display only).                     */
   products: [
     {
@@ -109,10 +109,10 @@ window.PIX2PRINTS = {
       description: "Glossy portrait acrylic with real depth and shine."
     },
     {
-      /* Locked decision: Acrylic Keychain is filed under "keychains". (TRD §1.1, §6.2) */
+      /* Locked decision: Acrylic Keychain is filed under "keychains". */
       slug: "acrylic-keychain-30x44",
       name: "Acrylic Keychain",
-      subtitle: "Two-photo split",
+      subtitle: "Front & back photo",
       category: "keychains",
       shape: "rect",
       widthMm: 30,
@@ -120,7 +120,7 @@ window.PIX2PRINTS = {
       quantity: 2,
       price: 299,
       preview: "assets/previews/acrylic-keychain-30x44.svg",
-      description: "One keychain, two photos placed side by side."
+      description: "One keychain, two photos — front and back after folding."
     },
     {
       slug: "polaroid-70",
@@ -149,3 +149,5 @@ window.PIX2PRINTS = {
     }
   ]
 };
+
+export default PIX2PRINTS;

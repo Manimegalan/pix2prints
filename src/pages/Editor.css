@@ -1,30 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Pix2Prints — Editor</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Pix2Prints — Editor page styles
+   ---------------------------------------------------------------------------
+   Deliberately a PLAIN (non-CSS-module) stylesheet: Editor.jsx ports the
+   original editor.js almost verbatim, and that script manipulates class
+   names as plain strings (classList.add/toggle, className = "...") on
+   elements it builds itself for the frame-fit canvas. Keeping these class
+   names un-hashed means the ported script needs no changes to keep working.
+   Scoped safely: Catalog's own styles live in CSS Modules, so there is no
+   name collision between the two pages' class names.
+   ═══════════════════════════════════════════════════════════════════════════ */
 :root{
   --surface-base:#E6EAF2; --surface-sunken:#DCE1EC; --surface-raised:#FFFFFF; --surface-invert:#232B38;
   --text-strong:#1E2733; --text-body:#3A4453; --text-muted:#68738A; --text-onDark:#FFFFFF;
   --accent:#EF5350; --accent-soft:#FDE7E6;
   --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:24px; --r-pill:999px;
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
-  --shadow-card:0 18px 40px rgba(120,135,165,0.22);
+  --editor-shadow-card:0 18px 40px rgba(120,135,165,0.22);
   --shadow-btn:0 8px 18px rgba(35,43,56,0.28);
   --shadow-inset:inset 3px 3px 7px rgba(163,177,198,0.55), inset -3px -3px 7px rgba(255,255,255,0.9);
   --frame-w-px:300px; --frame-h-px:300px;
 }
-*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
-html,body{ width:100%; height:100%; }
-body{
+
+/* Page wrapper — replaces the original page's <body> styling */
+.editor-page{
   background:var(--surface-base); color:var(--text-body);
   font-family:'Inter',system-ui,sans-serif; font-size:14px;
-  overscroll-behavior:none; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased;
+  min-height:100vh;
 }
 
 /* ── App shell: fixed full viewport, frame never shifts ── */
@@ -35,7 +36,7 @@ body{
 .icon-btn{
   width:44px; height:44px; border-radius:var(--r-sm); border:none; cursor:pointer;
   display:grid; place-items:center; background:var(--surface-raised); color:var(--text-strong);
-  box-shadow:var(--shadow-card); flex-shrink:0; text-decoration:none; transition:transform .1s;
+  box-shadow:var(--editor-shadow-card); flex-shrink:0; text-decoration:none; transition:transform .1s;
 }
 .icon-btn:active{ transform:scale(0.92); }
 .icon-btn svg{ width:20px; height:20px; }
@@ -59,7 +60,7 @@ body{
 .guide-btn{
   display:flex; align-items:center; gap:6px; padding:9px 14px; border-radius:var(--r-pill);
   background:var(--surface-raised); color:var(--text-body); border:none; cursor:pointer;
-  box-shadow:var(--shadow-card); font-family:'Inter',sans-serif; font-size:12px; font-weight:600;
+  box-shadow:var(--editor-shadow-card); font-family:'Inter',sans-serif; font-size:12px; font-weight:600;
   white-space:nowrap; transition:background .15s,color .15s,transform .1s;
 }
 .guide-btn:active{ transform:scale(0.94); }
@@ -158,7 +159,7 @@ input[type=range]::-moz-range-thumb{ width:24px; height:24px; border-radius:50%;
 /* ── Modal ── */
 .overlay{ position:fixed; inset:0; z-index:300; background:rgba(30,39,51,0.45); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:var(--s-4); }
 .overlay.show{ display:flex; }
-.modal{ width:100%; max-width:400px; background:var(--surface-raised); border-radius:var(--r-lg); box-shadow:var(--shadow-card); padding:var(--s-6) var(--s-5); animation:pop .2s ease; }
+.modal{ width:100%; max-width:400px; background:var(--surface-raised); border-radius:var(--r-lg); box-shadow:var(--editor-shadow-card); padding:var(--s-6) var(--s-5); animation:pop .2s ease; }
 @keyframes pop{ from{ opacity:0; transform:translateY(10px) scale(.98); } to{ opacity:1; transform:none; } }
 .modal h2{ font-family:'Poppins',sans-serif; font-weight:800; font-size:20px; color:var(--text-strong); letter-spacing:-0.01em; }
 .modal .lede{ font-size:13px; color:var(--text-muted); margin-top:6px; margin-bottom:var(--s-5); }
@@ -173,9 +174,8 @@ input[type=range]::-moz-range-thumb{ width:24px; height:24px; border-radius:50%;
 .modal-actions .btn-primary{ flex:1.4; }
 
 /* ── Product not found ── */
-#notfound{ position:fixed; inset:0; z-index:400; display:none; align-items:center; justify-content:center; padding:var(--s-5); background:var(--surface-base); }
-#notfound.show{ display:flex; }
-.nf-card{ text-align:center; max-width:360px; background:var(--surface-raised); border-radius:var(--r-lg); box-shadow:var(--shadow-card); padding:var(--s-6) var(--s-5); }
+#notfound{ position:fixed; inset:0; z-index:400; display:flex; align-items:center; justify-content:center; padding:var(--s-5); background:var(--surface-base); }
+.nf-card{ text-align:center; max-width:360px; background:var(--surface-raised); border-radius:var(--r-lg); box-shadow:var(--editor-shadow-card); padding:var(--s-6) var(--s-5); }
 .nf-card .mark{ width:56px; height:56px; margin:0 auto var(--s-4); border-radius:var(--r-md); background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; }
 .nf-card .mark svg{ width:26px; height:26px; }
 .nf-card h2{ font-family:'Poppins',sans-serif; font-weight:800; font-size:22px; color:var(--text-strong); }
@@ -200,141 +200,3 @@ input[type=range]::-moz-range-thumb{ width:24px; height:24px; border-radius:50%;
 .icon-btn:focus-visible,.guide-btn:focus-visible,.tab-btn:focus-visible,.link-btn:focus-visible,
 .reset-btn:focus-visible,.toggle-btn:focus-visible,.btn-primary:focus-visible,.btn-ghost:focus-visible,
 #load-btn:focus-visible{ outline:2.5px solid var(--accent); outline-offset:2px; }
-</style>
-</head>
-<body>
-<div id="app">
-
-  <!-- Top bar -->
-  <div id="topbar">
-    <a class="icon-btn" href="index.html" aria-label="Back to catalog">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-    </a>
-    <div class="top-title">
-      <div class="name" id="top-name">Editor</div>
-      <div class="spec" id="top-spec"></div>
-    </div>
-    <button id="load-btn" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Photo
-    </button>
-  </div>
-
-  <!-- Canvas zone -->
-  <div id="canvas-zone">
-    <div id="guide-bar">
-      <button class="guide-btn" id="gb-grid" type="button">
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x=".75" y=".75" width="12.5" height="12.5" rx="1"/><line x1="4.67" y1=".75" x2="4.67" y2="13.25"/><line x1="9.33" y1=".75" x2="9.33" y2="13.25"/><line x1=".75" y1="4.67" x2="13.25" y2="4.67"/><line x1=".75" y1="9.33" x2="13.25" y2="9.33"/></svg>
-        Grid
-      </button>
-      <button class="guide-btn" id="gb-cross" type="button">
-        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/><circle cx="7" cy="7" r="1.4" fill="currentColor" stroke="none"/></svg>
-        Center
-      </button>
-      <span class="guide-spacer"></span>
-      <span class="img-status"><span class="dot" id="status-dot"></span><span class="nm" id="img-name">no photo</span></span>
-    </div>
-
-    <div id="stage">
-      <div id="well">
-        <div id="frame-outer"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom controls -->
-  <div id="controls">
-    <div id="panel-wrap">
-
-      <div class="panel active" id="panel-pos">
-        <div class="panel-head"><span class="panel-title">Position</span><button class="reset-btn" id="reset-pos" type="button">Reset</button></div>
-        <div class="slider-row"><span class="slider-name">X</span><input type="range" id="tx" min="-600" max="600" value="0" step="1"><span class="slider-val" id="tx-val">0px</span></div>
-        <div class="slider-row" style="margin-bottom:4px"><span class="slider-name">Y</span><input type="range" id="ty" min="-600" max="600" value="0" step="1"><span class="slider-val" id="ty-val">0px</span></div>
-        <p class="hint-line">Or drag the photo on the canvas.</p>
-      </div>
-
-      <div class="panel" id="panel-scale">
-        <div class="panel-head"><span class="panel-title">Scale</span><button class="reset-btn" id="reset-scale" type="button">Reset</button></div>
-        <div class="slider-row"><span class="slider-name">W</span><input type="range" id="sw" min="10" max="600" value="100" step="1"><span class="slider-val" id="sw-val">100%</span>
-          <button class="link-btn active" id="link-scale" type="button" title="Link width & height" aria-pressed="true">
-            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4H3a2 2 0 000 4h2"/><path d="M9 4h2a2 2 0 010 4H9"/><line x1="5" y1="7" x2="9" y2="7"/></svg>
-          </button>
-        </div>
-        <div class="slider-row" style="margin-bottom:0"><span class="slider-name">H</span><input type="range" id="sh" min="10" max="600" value="100" step="1"><span class="slider-val" id="sh-val">100%</span><span style="width:26px;flex-shrink:0"></span></div>
-      </div>
-
-      <div class="panel" id="panel-rot">
-        <div class="panel-head"><span class="panel-title">Rotation</span><button class="reset-btn" id="reset-rot" type="button">Reset</button></div>
-        <div class="slider-row" style="margin-bottom:0"><span class="slider-name">&deg;</span><input type="range" id="rot" min="-180" max="180" value="0" step="1"><span class="slider-val" id="rot-val">0&deg;</span></div>
-      </div>
-
-      <div class="panel" id="panel-flip">
-        <div class="panel-head"><span class="panel-title">Flip</span><button class="reset-btn" id="reset-flip" type="button">Reset</button></div>
-        <div class="toggle-row">
-          <button class="toggle-btn" id="flip-h" type="button">Horizontal</button>
-          <button class="toggle-btn" id="flip-v" type="button">Vertical</button>
-        </div>
-      </div>
-
-      <div class="panel" id="panel-upload">
-        <div class="panel-head"><span class="panel-title">Upload</span><button class="reset-btn" id="reset-all" type="button">Reset all</button></div>
-        <dl class="meta">
-          <dt>Output</dt><dd id="meta-px">—</dd>
-          <dt>Photos</dt><dd id="meta-imgs">—</dd>
-        </dl>
-        <button class="btn-primary" id="upload-btn" type="button">Upload print file</button>
-      </div>
-
-    </div>
-
-    <div id="tab-bar">
-      <button class="tab-btn active" data-panel="pos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2.5"/><line x1="12" y1="2" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="2" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="22" y2="12"/></svg>Position</button>
-      <button class="tab-btn" data-panel="scale" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>Scale</button>
-      <button class="tab-btn" data-panel="rot" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 11-.57-8.38"/></svg>Rotate</button>
-      <button class="tab-btn" data-panel="flip" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3H5a2 2 0 00-2 2v14a2 2 0 002 2h3"/><path d="M16 3h3a2 2 0 012 2v14a2 2 0 01-2 2h-3"/><line x1="12" y1="3" x2="12" y2="21"/></svg>Flip</button>
-      <button class="tab-btn" data-panel="upload" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>Upload</button>
-    </div>
-  </div>
-</div>
-
-<!-- Customer details modal -->
-<div class="overlay" id="details-overlay">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="details-title">
-    <h2 id="details-title">Your details</h2>
-    <p class="lede">So we can match your print file to your order. We only use this to reach you about this print.</p>
-    <div class="field">
-      <label for="cust-name">Name</label>
-      <input id="cust-name" type="text" autocomplete="name" placeholder="e.g. Rahul Sharma" inputmode="text">
-      <div class="err" id="name-err"></div>
-    </div>
-    <div class="field">
-      <label for="cust-mobile">Mobile number</label>
-      <input id="cust-mobile" type="tel" autocomplete="tel" placeholder="10-digit Indian mobile" inputmode="tel">
-      <div class="err" id="mobile-err"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-ghost" id="details-cancel" type="button">Cancel</button>
-      <button class="btn-primary" id="details-confirm" type="button" disabled>Upload now</button>
-    </div>
-  </div>
-</div>
-
-<!-- Product not found -->
-<div id="notfound">
-  <div class="nf-card">
-    <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor"/></svg></div>
-    <h2>Product not found</h2>
-    <p id="nf-msg">We couldn't find that product. It may have been renamed or removed.</p>
-    <a href="index.html">Back to catalog</a>
-  </div>
-</div>
-
-<input type="file" id="file-input" accept="image/*">
-<div id="toast"><span class="ic" id="toast-ic"></span><span class="msg" id="toast-msg"></span></div>
-<canvas id="export-canvas" style="display:none"></canvas>
-
-<!-- Config first (plain global, file:// safe), then editor logic -->
-<script src="config.js"></script>
-<script src="editor.js"></script>
-</body>
-</html>

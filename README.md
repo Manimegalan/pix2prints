@@ -1,66 +1,78 @@
-# Pix2Prints — v1
+# Pix2Prints — React (Vite)
 
-A mobile-first, dependency-free storefront + frame-fit photo editor. A customer
-picks a product, fits their photo into that product's exact print area, enters
-their name and mobile number, and the app renders a print-ready PNG at 300 DPI
-and uploads it — with the metadata — to a configured endpoint.
-
-Plain HTML/CSS/JS. No framework, no bundler, no build step.
-
-## Files
-
-```
-index.html    Storefront shell (markup + styles)
-editor.html   Editor shell (markup + styles)
-config.js     Central product + app config  ← the only file you normally edit
-catalog.js    Renders the storefront grid from config
-editor.js     Editor logic: frame-fit, 300-DPI export, upload
-assets/previews/*.svg   Product preview tiles referenced by config
-```
+React + Vite port of the original plain-HTML/JS Pix2Prints storefront and
+frame-fit photo editor. Same product config, same 300-DPI export pipeline,
+same upload flow — now as componentized routes instead of two separate
+HTML pages.
 
 ## Run locally
 
-Just open `index.html` in a modern browser (Chrome is the reference). The config
-loads as a plain global script, so it works over `file://` as well as `https://`
-— no local server needed. Reference platform is Android Chrome.
+```bash
+npm install
+npm run dev
+```
+
+Open the printed local URL. `npm run build` produces a static `dist/`
+folder you can deploy anywhere (GitHub Pages, Netlify, S3, etc.) — it's a
+client-only SPA with no server requirement beyond serving static files.
+
+## Structure
+
+```
+src/
+  config.js              Product + app config — the only file you normally edit
+  main.jsx               App entry, wraps <App/> in a BrowserRouter
+  App.jsx                Routes: "/" → Catalog, "/editor" → Editor
+  index.css              Small global reset shared by both pages
+  pages/
+    Catalog.jsx           Storefront: search, category chips, product grid
+    Catalog.module.css    Catalog styles (CSS Modules — scoped classes)
+    Editor.jsx            Frame-fit editor: drag/scale/rotate/flip, DPI export, upload
+    Editor.css            Editor styles (plain global CSS, see note below)
+  components/
+    ProductCard.jsx        Product card with its own image carousel
+```
+
+Routing replaces the old `index.html` / `editor.html` navigation:
+`editor.html?slug=X` is now `/editor?slug=X`, read via
+`react-router-dom`'s `useSearchParams`.
+
+## Why Editor.jsx isn't "pure" React
+
+The frame-fit canvas (drag to pan, cover-fit scaling, rotate, flip, live
+guides, 300-DPI canvas export) is perf-sensitive and was already correct as
+plain DOM/canvas code. `Editor.jsx` renders the static shell as JSX, then an
+effect ports the original `editor.js` logic almost line-for-line against
+that DOM (refs/ids), with an `AbortController` cleaning up every listener
+when you navigate away. This keeps the exact drag physics and export math
+from the original, while everything else (routing, the catalog, config) is
+idiomatic React. `Editor.css` is intentionally a plain (non-module)
+stylesheet so that script can keep using plain class-name strings; `Catalog`
+uses CSS Modules since it's fully React-driven.
 
 ## Configure
 
-Everything product- and environment-specific lives in `config.js`:
+Everything product- and environment-specific lives in `src/config.js`:
 
-- **Upload endpoint** — `PIX2PRINTS.app.uploadEndpoint`. Must be an **`https://`**
-  URL (GitHub Pages is HTTPS and a page cannot POST to `http://` — the browser
-  blocks it). The placeholder `https://api.example.com/uploads` will return a
-  network/CORS error until you point it at a real endpoint; that's expected.
-- **Products** — add/remove entries in `PIX2PRINTS.products`. Adding a product is
-  a config change only; no storefront or editor code changes. Each entry:
-  `slug, name, subtitle?, category, shape ("circle"|"rect"), diameterMm | widthMm+heightMm, quantity (1 or 2 for split, rect only), preview, description?`.
-
-## Deploy (GitHub Pages)
-
-Push these files to the Pages branch/folder. All links are **relative**, so it
-works from a project subpath (`https://<user>.github.io/<repo>/`). No build step.
+- **Upload endpoint** — `app.uploadEndpoint`. Must be an **`https://`** URL.
+- **Products** — add/remove entries in `products`. Adding a product is a
+  config change only; no component changes needed.
 
 ## What the backend must do
 
-The editor sends a **`multipart/form-data` POST** (no custom headers) with:
+Same contract as the original: the editor POSTs `multipart/form-data` with a
+`file` (PNG named `{name-slug}_{mobile}_{product-slug}_{timestamp}.png`),
+product/print metadata (`product_slug`, `shape`, `quantity`, `dpi`,
+`diameter_mm` or `width_mm`+`height_mm`, `px_width`, `px_height`), and
+customer details (`customer_name`, `customer_mobile`). The endpoint must
+return HTTP 200 on success and send `Access-Control-Allow-Origin` for your
+deployed origin (or `*`).
 
-| field | notes |
-|---|---|
-| `file` | the PNG, named `{name-slug}_{mobile}_{product-slug}_{YYYYMMDD-HHmmss}.png` |
-| `product_slug`, `product_name`, `shape`, `quantity`, `dpi` | from config |
-| `diameter_mm` *(circle)* or `width_mm` + `height_mm` *(rect)* | physical size; `width_mm` is the overall item width |
-| `px_width`, `px_height` | exported canvas pixel size |
-| `customer_name`, `customer_mobile` | mobile is a normalized 10-digit number |
+## Notes / known limits (unchanged from v1)
 
-The endpoint must return **HTTP 200 on success** (anything else is treated as a
-failure) and send **`Access-Control-Allow-Origin`** for the Pages origin (or `*`).
-The uploaded PNG is always a full rectangle; circle and split cuts happen
-physically at production.
-
-## Notes / known v1 limits
-
-- Background fill for exposed areas is **white** (opaque), by design.
+- Background fill for exposed print areas is white (opaque), by design.
 - Single upload attempt — on error, the customer can press upload again.
-- EXIF orientation is not normalized (browser default) — watch during Android QA.
-- iOS/Safari/HEIC and in-app camera capture are out of scope for v1.
+- EXIF orientation is not normalized (browser default).
+- iOS/Safari/HEIC and in-app camera capture are out of scope.
+- `assets/previews/*.svg` referenced in `config.js` were not present in the
+  original project either — add them if you want product preview art.
