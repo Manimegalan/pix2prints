@@ -12,6 +12,10 @@ const CORNER_STYLES = [
   { bottom: 0, right: 0, borderWidth: '0 2px 2px 0' },
 ]
 
+const MIN_SCALE = 0.1 // 10% — matches the scale slider
+const MAX_SCALE = 6 // 600%
+const clampScale = (v) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, v))
+
 const UploadHintIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -32,8 +36,12 @@ export default function FrameSlot({
   onActivate,
   onRequestImage,
   onPan,
+  onTransform,
 }) {
-  const drag = useRef(null)
+  // One gesture at a time. `pointers` holds every finger currently down on
+  // this slot; `mode` is 'pan' (one finger) or 'pinch' (two fingers), and
+  // `base` captures the frame transform + touch geometry at gesture start.
+  const gesture = useRef({ pointers: new Map(), mode: 'none', base: null })
   const { slotW, frameH } = size
   const { baseW, baseH } = coverFitBaseline(frame.naturalAspect, slotW, frameH)
 
@@ -46,7 +54,37 @@ export default function FrameSlot({
   const isMoved =
     Math.abs(tx) > 4 || Math.abs(ty) > 4 || frame.scaleW > 1.05 || frame.scaleH > 1.05 || frame.rotation !== 0
 
-  /* ── Drag to pan (or tap an empty slot to pick a photo) ──────────────── */
+  /* ── Gestures: one finger pans, two fingers pinch-scale (+ pan) ──────── */
+  function twoPointers() {
+    return Array.from(gesture.current.pointers.values())
+  }
+  function pinchMetrics() {
+    const [a, b] = twoPointers()
+    return {
+      dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+      midX: (a.x + b.x) / 2,
+      midY: (a.y + b.y) / 2,
+    }
+  }
+  function startPan() {
+    const [p] = twoPointers()
+    gesture.current.mode = 'pan'
+    gesture.current.base = { startX: p.x, startY: p.y, baseTx: tx, baseTy: ty }
+  }
+  function startPinch() {
+    const { dist, midX, midY } = pinchMetrics()
+    gesture.current.mode = 'pinch'
+    gesture.current.base = {
+      startDist: dist,
+      startMidX: midX,
+      startMidY: midY,
+      baseScaleW: frame.scaleW,
+      baseScaleH: frame.scaleH,
+      baseTx: tx,
+      baseTy: ty,
+    }
+  }
+
   function handlePointerDown(e) {
     if (e.button != null && e.button !== 0) return
     onActivate(index)
@@ -55,16 +93,44 @@ export default function FrameSlot({
       return
     }
     e.currentTarget.setPointerCapture(e.pointerId)
-    drag.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, baseTx: tx, baseTy: ty }
+    gesture.current.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    const count = gesture.current.pointers.size
+    if (count === 1) startPan()
+    else if (count === 2) startPinch()
   }
+
   function handlePointerMove(e) {
-    if (!drag.current || drag.current.pointerId !== e.pointerId) return
-    const nextTx = drag.current.baseTx + (e.clientX - drag.current.startX)
-    const nextTy = drag.current.baseTy + (e.clientY - drag.current.startY)
-    onPan(index, nextTx / slotW, nextTy / frameH)
+    const g = gesture.current
+    if (!g.pointers.has(e.pointerId)) return
+    g.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (g.mode === 'pinch' && g.pointers.size >= 2) {
+      const { dist, midX, midY } = pinchMetrics()
+      const ratio = dist / g.base.startDist
+      onTransform(index, {
+        scaleW: clampScale(g.base.baseScaleW * ratio),
+        scaleH: clampScale(g.base.baseScaleH * ratio),
+        offsetX: (g.base.baseTx + (midX - g.base.startMidX)) / slotW,
+        offsetY: (g.base.baseTy + (midY - g.base.startMidY)) / frameH,
+      })
+    } else if (g.mode === 'pan' && g.pointers.size === 1) {
+      const nextTx = g.base.baseTx + (e.clientX - g.base.startX)
+      const nextTy = g.base.baseTy + (e.clientY - g.base.startY)
+      onPan(index, nextTx / slotW, nextTy / frameH)
+    }
   }
-  function endDrag(e) {
-    if (drag.current?.pointerId === e.pointerId) drag.current = null
+
+  function endPointer(e) {
+    const g = gesture.current
+    if (!g.pointers.delete(e.pointerId)) return
+    // Lifting one finger of a pinch: fall back to panning with the other,
+    // re-basing from the current transform so the image doesn't jump.
+    if (g.pointers.size === 1) startPan()
+    else if (g.pointers.size === 0) {
+      g.mode = 'none'
+      g.base = null
+    }
   }
 
   return (
@@ -93,11 +159,14 @@ export default function FrameSlot({
           width: slotW,
           height: frameH,
           borderRadius: geometry.isCircle ? '50%' : undefined,
+          // Stop the browser from claiming touch-drags as scroll/zoom
+          // gestures (which would fire pointercancel and kill the pan).
+          touchAction: 'none',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
+        onPointerUp={endPointer}
+        onPointerCancel={endPointer}
       >
         <div
           className="slot-layer"
