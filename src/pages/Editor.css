@@ -112,8 +112,11 @@
 .circle-ring{ position:absolute; inset:0; border-radius:50%; border:2px solid var(--surface-invert); z-index:10; pointer-events:none; }
 
 /* ── Bottom controls ── */
-#controls{ flex-shrink:0; background:var(--surface-raised); border-radius:var(--r-lg) var(--r-lg) 0 0; box-shadow:0 -12px 32px rgba(120,135,165,0.20); display:flex; flex-direction:column; height:calc(236px + env(safe-area-inset-bottom, 0px)); overflow:hidden; }
-#panel-wrap{ flex:1; overflow-y:auto; }
+#controls{ flex-shrink:0; background:var(--surface-raised); border-radius:var(--r-lg) var(--r-lg) 0 0; box-shadow:0 -12px 32px rgba(120,135,165,0.20); display:flex; flex-direction:column; overflow:hidden; }
+/* Collapsible panel (Lightroom-style): closed = 0 height, open slides to full. */
+#panel-wrap{ height:0; overflow:hidden; transition:height .28s ease; }
+#panel-wrap.open{ height:188px; overflow-y:auto; }
+@media (prefers-reduced-motion: reduce){ #panel-wrap{ transition:none; } }
 .panel{ display:none; padding:var(--s-4) var(--s-5) var(--s-3); }
 .panel.active{ display:block; }
 .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--s-4); }

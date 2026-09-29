@@ -23,7 +23,19 @@ export default function EditorView({ product }) {
   const editor = useFrameEditor(product, { showToast })
   const { geometry } = editor
 
-  const [activeTab, setActiveTab] = useState('pos')
+  // Bottom panel behaves like Lightroom: the icon row is always visible, and
+  // the panel above it slides open/closed. Starts collapsed (canvas maximized);
+  // `activeTab` retains the last panel so it can animate shut with its content.
+  const [activeTab, setActiveTab] = useState(null)
+  const [panelOpen, setPanelOpen] = useState(false)
+  const toggleTab = (id) => {
+    if (panelOpen && activeTab === id) {
+      setPanelOpen(false)
+    } else {
+      setActiveTab(id)
+      setPanelOpen(true)
+    }
+  }
   const [gridOn, setGridOn] = useState(false)
   const [crossOn, setCrossOn] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -109,7 +121,8 @@ export default function EditorView({ product }) {
         <Controls
           editor={editor}
           activeTab={activeTab}
-          onSelectTab={setActiveTab}
+          panelOpen={panelOpen}
+          onSelectTab={toggleTab}
           outputLabel={outputLabel}
           onUpload={startUpload}
           uploading={uploading}
