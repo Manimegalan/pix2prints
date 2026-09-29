@@ -12,6 +12,15 @@ export default function Catalog() {
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
 
+  // Footer social links. wa.me opens the WhatsApp app (mobile) or WhatsApp Web,
+  // pre-filled with the chat message; the Instagram URL opens the app on mobile.
+  const social = CONFIG.app?.social || {}
+  const whatsappHref = social.whatsappNumber
+    ? `https://wa.me/${social.whatsappNumber}` +
+      (social.whatsappMessage ? `?text=${encodeURIComponent(social.whatsappMessage)}` : '')
+    : null
+  const instagramUrl = social.instagramUrl || null
+
   const categories = useMemo(
     () => [{ id: 'all', label: 'All' }, ...(CONFIG.categories || [])],
     []
@@ -136,14 +145,28 @@ export default function Catalog() {
             <h3>Questions about your order?</h3>
             <p>Chat with the studio — real people, quick replies. No account needed.</p>
             <div className={styles['foot__help-actions']}>
-              <a className={`${styles.hbtn} ${styles['hbtn--wa']}`} href="#">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.6 2 2.2 6.4 2.2 11.84c0 1.9.5 3.66 1.36 5.2L2 22l5.1-1.5a9.8 9.8 0 0 0 4.94 1.32h.01c5.44 0 9.84-4.4 9.84-9.84C21.9 6.4 17.48 2 12.04 2Zm5.76 13.9c-.24.68-1.4 1.32-1.94 1.36-.5.05-1.13.07-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.26-4.8-4.19-4.94-4.38-.14-.19-1.18-1.57-1.18-3s.75-2.13 1.02-2.42c.27-.29.58-.36.78-.36l.56.01c.18.01.42-.07.66.5.24.58.82 2 .9 2.15.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.14-.3.3-.13.59.17.29.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.35 1.46.29.14.46.12.63-.07.17-.19.73-.85.92-1.14.19-.29.39-.24.65-.14.27.09 1.68.79 1.97.94.29.14.48.21.55.33.07.12.07.69-.17 1.37Z" /></svg>
-                WhatsApp
-              </a>
-              <a className={`${styles.hbtn} ${styles['hbtn--ig']}`} href="#">
-                <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" strokeWidth="1.8" /><circle cx="12" cy="12" r="3.6" stroke="currentColor" strokeWidth="1.8" /><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" /></svg>
-                Instagram
-              </a>
+              {whatsappHref && (
+                <a
+                  className={`${styles.hbtn} ${styles['hbtn--wa']}`}
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.6 2 2.2 6.4 2.2 11.84c0 1.9.5 3.66 1.36 5.2L2 22l5.1-1.5a9.8 9.8 0 0 0 4.94 1.32h.01c5.44 0 9.84-4.4 9.84-9.84C21.9 6.4 17.48 2 12.04 2Zm5.76 13.9c-.24.68-1.4 1.32-1.94 1.36-.5.05-1.13.07-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.26-4.8-4.19-4.94-4.38-.14-.19-1.18-1.57-1.18-3s.75-2.13 1.02-2.42c.27-.29.58-.36.78-.36l.56.01c.18.01.42-.07.66.5.24.58.82 2 .9 2.15.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.14-.3.3-.13.59.17.29.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.35 1.46.29.14.46.12.63-.07.17-.19.73-.85.92-1.14.19-.29.39-.24.65-.14.27.09 1.68.79 1.97.94.29.14.48.21.55.33.07.12.07.69-.17 1.37Z" /></svg>
+                  WhatsApp
+                </a>
+              )}
+              {instagramUrl && (
+                <a
+                  className={`${styles.hbtn} ${styles['hbtn--ig']}`}
+                  href={instagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" strokeWidth="1.8" /><circle cx="12" cy="12" r="3.6" stroke="currentColor" strokeWidth="1.8" /><circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" /></svg>
+                  Instagram
+                </a>
+              )}
             </div>
             <div className={styles['foot__track']}>
               <input type="text" placeholder="Order ID · e.g. P2P-4821" aria-label="Track your order by ID" />
