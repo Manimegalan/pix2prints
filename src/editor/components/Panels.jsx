@@ -143,10 +143,10 @@ export function UploadPanel({ editor, upload }) {
       <PanelHead title="Finish" resetLabel="Reset all" onReset={editor.resetAll} />
       <div className="upload-actions">
         <button className="btn-ghost" type="button" onClick={onAddMore} disabled={!canAddMore || busy}>
-          {busy ? 'Working…' : 'Add more image'}
+          {busy ? 'Working…' : 'Add more'}
         </button>
         <button className="btn-primary" type="button" onClick={onNext} disabled={!canNext || busy}>
-          Next · Preview
+          Next
         </button>
       </div>
     </div>

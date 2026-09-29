@@ -5,9 +5,11 @@ import './index.css'
 import App from './App.jsx'
 import { CollectionProvider } from './collection/CollectionContext.jsx'
 
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <CollectionProvider>
         <App />
       </CollectionProvider>
