@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import CONFIG from '../config.js'
 import ProductCard from '../components/ProductCard.jsx'
 import { useCollection } from '../collection/CollectionContext.jsx'
+import logoUrl from "/logo.png"
 import styles from './Catalog.module.css'
 
 export default function Catalog() {
@@ -42,7 +43,7 @@ export default function Catalog() {
         <header className={styles.topbar}>
           <div className={styles.brand}>
             <span className={styles['brand__logo']} aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="3" stroke="#fff" strokeWidth="1.8" /><path d="M3 15l4.5-4.5 3.5 3.5 3-3L21 16" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /><circle cx="9" cy="9" r="1.6" fill="#fff" /></svg>
+              <img src={logoUrl} alt="logo" />
             </span>
             <div>
               <div className={styles['brand__name']}>Pix2Prints</div>

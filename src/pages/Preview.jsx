@@ -109,7 +109,7 @@ export default function Preview() {
                 ✕
               </button>
               <div className={styles.thumbWrap}>
-                <img className={styles.thumb} src={item.url} alt={item.productName} />
+                <img className={styles.thumb} src={item.url} alt={item.productName} style={item.geometry.isCircle ? { borderRadius: '50%' } : undefined} />
               </div>
               <div className={styles.meta}>
                 <div className={styles.pname}>{item.productName}</div>
