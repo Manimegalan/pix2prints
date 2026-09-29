@@ -136,6 +136,13 @@ export function useFrameEditor(product, { showToast }) {
     [updateFrame],
   )
 
+  // Apply an arbitrary transform patch to a slot in one update — used by the
+  // pinch gesture, which changes scale and offset together.
+  const setFrameTransform = useCallback(
+    (index, patch) => updateFrame(index, patch),
+    [updateFrame],
+  )
+
   const setActiveOffsetXPx = useCallback(
     (px) => updateActive((f) => ({ ...f, offsetX: px / size.slotW })),
     [size.slotW, updateActive],
@@ -201,6 +208,7 @@ export function useFrameEditor(product, { showToast }) {
     openFilePicker,
     onFileInputChange,
     setFrameOffset,
+    setFrameTransform,
     setActiveOffsetXPx,
     setActiveOffsetYPx,
     setActiveScaleWPct,
