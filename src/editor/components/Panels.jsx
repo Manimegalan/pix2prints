@@ -136,13 +136,19 @@ export function FlipPanel({ editor }) {
   )
 }
 
-export function UploadPanel({ editor, onUpload, uploading }) {
+export function UploadPanel({ editor, upload }) {
+  const { onAddMore, onNext, busy, canAddMore, canNext } = upload
   return (
     <div className="panel active" id="panel-upload">
-      <PanelHead title="Upload" resetLabel="Reset all" onReset={editor.resetAll} />
-      <button className="btn-primary" type="button" onClick={onUpload} disabled={uploading}>
-        {uploading ? 'Uploading…' : 'Upload print file'}
-      </button>
+      <PanelHead title="Finish" resetLabel="Reset all" onReset={editor.resetAll} />
+      <div className="upload-actions">
+        <button className="btn-ghost" type="button" onClick={onAddMore} disabled={!canAddMore || busy}>
+          {busy ? 'Working…' : 'Add more image'}
+        </button>
+        <button className="btn-primary" type="button" onClick={onNext} disabled={!canNext || busy}>
+          Next · Preview
+        </button>
+      </div>
     </div>
   )
 }

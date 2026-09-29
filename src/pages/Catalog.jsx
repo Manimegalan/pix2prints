@@ -1,9 +1,13 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CONFIG from '../config.js'
 import ProductCard from '../components/ProductCard.jsx'
+import { useCollection } from '../collection/CollectionContext.jsx'
 import styles from './Catalog.module.css'
 
 export default function Catalog() {
+  const navigate = useNavigate()
+  const { count } = useCollection()
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -45,9 +49,13 @@ export default function Catalog() {
               <div className={styles['brand__tag']}>Photo print studio</div>
             </div>
           </div>
-          <button className={styles.cart} aria-label="Bag, 0 items">
+          <button
+            className={styles.cart}
+            aria-label={`Bag, ${count} ${count === 1 ? 'item' : 'items'}`}
+            onClick={() => navigate('/preview')}
+          >
             <svg viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-.85 10.2A2 2 0 0 1 15.16 20H8.84a2 2 0 0 1-1.99-1.8L6 8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /><path d="M9 8V6.6a3 3 0 0 1 6 0V8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-            <span className={styles['cart__count']}>0</span>
+            <span className={styles['cart__count']}>{count}</span>
           </button>
         </header>
 

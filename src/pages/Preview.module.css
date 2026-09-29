@@ -1,0 +1,173 @@
+/* Preview / carousel page. Design tokens (--surface-*, --r-*, etc.) come from
+   Editor.css, which Preview.jsx imports for the shared modal/button/toast look. */
+
+.page {
+  position: fixed;
+  inset: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--surface-base);
+  color: var(--text-body);
+  font-family: 'Inter', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: calc(var(--s-3) + env(safe-area-inset-top, 0px)) var(--s-4) var(--s-3);
+}
+.back {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--r-sm);
+  background: var(--surface-raised);
+  color: var(--text-strong);
+  box-shadow: var(--editor-shadow-card);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.back svg { width: 20px; height: 20px; }
+.back:active { transform: scale(0.92); }
+.title {
+  flex: 1;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-strong);
+}
+.spacer { width: 44px; flex-shrink: 0; }
+
+/* Swipeable, scroll-snapping carousel */
+.carousel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.carousel::-webkit-scrollbar { display: none; }
+
+.slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-4);
+}
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface-raised);
+  border-radius: var(--r-lg);
+  box-shadow: var(--editor-shadow-card);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+.remove {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-base);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+.remove:hover { color: var(--accent); }
+.remove:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.thumbWrap {
+  background: var(--surface-sunken);
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-inset);
+}
+.thumb {
+  max-width: 100%;
+  max-height: 46vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 26px rgba(40, 50, 70, 0.18);
+  background: #fff;
+}
+.meta { text-align: center; }
+.pname {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-strong);
+}
+.psub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.dots {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: var(--s-1) 0 var(--s-3);
+}
+.dot,
+.dotOn {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface-sunken);
+  transition: background 0.15s;
+}
+.dotOn { background: var(--accent); }
+
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4) calc(var(--s-4) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface-raised);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: 0 -12px 32px rgba(120, 135, 165, 0.2);
+}
+.actions :global(.btn-ghost) { flex: 1; }
+.actions :global(.btn-primary) { width: auto; flex: 1.4; }
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  text-align: center;
+  color: var(--text-muted);
+}
+.empty :global(.btn-primary) { width: auto; padding: 12px 22px; }
+
+/* The shared toast is positioned for the editor's bottom bar; nudge it up here. */
+:global(#toast) { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }

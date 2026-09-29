@@ -190,6 +190,13 @@ export function useFrameEditor(product, { showToast }) {
     )
   }, [])
 
+  // Wipe photos and transforms back to blank — used after a composition is
+  // added to the collection so the next one starts fresh.
+  const clearFrames = useCallback(() => {
+    setFrames([makeFrame(), makeFrame()])
+    setActiveFrame(0)
+  }, [])
+
   const loadedCount = frames
     .slice(0, geometry.photoCount)
     .filter((f) => f.hasImage).length
@@ -222,5 +229,6 @@ export function useFrameEditor(product, { showToast }) {
     resetRotation,
     resetFlip,
     resetAll,
+    clearFrames,
   }
 }

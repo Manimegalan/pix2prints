@@ -1,50 +1,50 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CONFIG from '../config.js'
 import { useFrameEditor } from './useFrameEditor.js'
 import { useToast } from './useToast.js'
+import { useCollection } from '../collection/CollectionContext.jsx'
 import TopBar from './components/TopBar.jsx'
 import GuideBar from './components/GuideBar.jsx'
 import Stage, { SIDE_LABELS } from './components/Stage.jsx'
 import Controls from './components/Controls.jsx'
 import Toast from './components/Toast.jsx'
 
-// Code-split: the details modal only loads when the user starts an upload.
-const DetailsModal = lazy(() => import('./components/DetailsModal.jsx'))
-
 const DPI = CONFIG.app?.dpi || 300
-const ENDPOINT = CONFIG.app?.uploadEndpoint || ''
 
-/* Orchestrator for a valid product. All the editing state lives in
-   useFrameEditor; this component just wires hooks to components and runs
-   the upload flow. */
+function makeId() {
+  return globalThis.crypto?.randomUUID?.() || String(Date.now()) + Math.random().toString(16).slice(2)
+}
+
+/* Orchestrator for a valid product. Editing state lives in useFrameEditor;
+   this component wires it to the UI and to the collection flow:
+   "Add more" renders the current composition into the collection and clears
+   the frame; "Next" adds the current one (if any) and opens the preview. */
 export default function EditorView({ product }) {
   const { toast, showToast } = useToast()
   const editor = useFrameEditor(product, { showToast })
   const { geometry } = editor
+  const collection = useCollection()
+  const navigate = useNavigate()
 
-  // Bottom panel behaves like Lightroom: the icon row is always visible, and
-  // the panel above it slides open/closed. Starts collapsed (canvas maximized);
-  // `activeTab` retains the last panel so it can animate shut with its content.
   const [activeTab, setActiveTab] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
   const toggleTab = (id) => {
-    if (panelOpen && activeTab === id) {
-      setPanelOpen(false)
-    } else {
+    if (panelOpen && activeTab === id) setPanelOpen(false)
+    else {
       setActiveTab(id)
       setPanelOpen(true)
     }
   }
+
   const [gridOn, setGridOn] = useState(false)
   const [crossOn, setCrossOn] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     document.title = 'Pix2Prints — ' + product.name
   }, [product.name])
 
-  /* ── Display strings ──────────────────────────────────────────────────── */
   const specStr = useMemo(() => {
     let s = geometry.isCircle ? `⌀ ${product.diameterMm} mm` : `${geometry.frameWmm} × ${geometry.frameHmm} mm`
     if (geometry.isTwoSided) s += ' · 2 photos'
@@ -57,42 +57,72 @@ export default function EditorView({ product }) {
     return geometry.isTwoSided ? `${SIDE_LABELS[editor.activeFrame]}: ${label}` : label
   }, [active.hasImage, active.imgName, geometry.isTwoSided, editor.activeFrame])
 
-  /* ── Upload flow ──────────────────────────────────────────────────────── */
-  function startUpload() {
-    if (!ENDPOINT) return showToast('No upload endpoint is configured.', 'error')
-    if (!/^https:\/\//i.test(ENDPOINT)) return showToast('Upload endpoint must be an https:// URL.', 'error')
-    if (!editor.allLoaded) {
-      return showToast(geometry.isTwoSided ? 'Add a photo to both front and back first.' : 'Add a photo first.', 'error')
+  /* ── Render the current composition into a collection item ────────────── */
+  async function renderCurrentToItem() {
+    const { renderPrint } = await import('./renderPrint.js') // heavy code, on demand
+    const blob = await renderPrint({ frames: editor.frames, geometry, dpi: DPI })
+    return {
+      id: makeId(),
+      product,
+      productName: product.name,
+      productSlug: product.slug,
+      geometry,
+      dpi: DPI,
+      blob,
+      url: URL.createObjectURL(blob),
     }
-    setModalOpen(true)
   }
 
-  async function confirmUpload(customer) {
-    setModalOpen(false)
-    setUploading(true)
-    showToast('Uploading your print file…', 'loading', 0)
+  const missingPhotoMessage = geometry.isTwoSided
+    ? 'Add a photo to both front and back first.'
+    : 'Add a photo first.'
 
-    try {
-      // Pull the heavy export + upload code in on demand (separate chunk).
-      const [{ renderPrint }, { uploadPrint }] = await Promise.all([
-        import('./renderPrint.js'),
-        import('./upload.js'),
-      ])
-
-      const blob = await renderPrint({ frames: editor.frames, geometry, dpi: DPI })
-      const res = await uploadPrint({ endpoint: ENDPOINT, blob, product, geometry, customer, dpi: DPI })
-
-      if (res.status === 200) {
-        showToast('Uploaded. We’ll get printing — thanks!', 'success')
-      } else {
-        showToast('Upload failed (server responded ' + res.status + '). Try again.', 'error')
-      }
-    } catch (err) {
-      const m = (err && err.message) || ''
-      showToast(/fetch|network|Failed/i.test(m) ? 'Couldn’t reach the server. Try again.' : 'Upload failed. Try again.', 'error')
-    } finally {
-      setUploading(false)
+  async function handleAddMore() {
+    if (!editor.allLoaded) {
+      showToast(missingPhotoMessage, 'error')
+      return
     }
+    setBusy(true)
+    try {
+      collection.addItem(await renderCurrentToItem())
+      editor.clearFrames()
+      setPanelOpen(false)
+      showToast('Added to your collection.', 'success')
+    } catch {
+      showToast('Couldn’t add that image. Try again.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleNext() {
+    let total = collection.count
+    if (editor.allLoaded) {
+      setBusy(true)
+      try {
+        collection.addItem(await renderCurrentToItem())
+        editor.clearFrames()
+        total += 1
+      } catch {
+        showToast('Couldn’t prepare the preview. Try again.', 'error')
+        return
+      } finally {
+        setBusy(false)
+      }
+    }
+    if (total === 0) {
+      showToast(missingPhotoMessage, 'error')
+      return
+    }
+    navigate('/preview')
+  }
+
+  const upload = {
+    onAddMore: handleAddMore,
+    onNext: handleNext,
+    busy,
+    canAddMore: editor.allLoaded,
+    canNext: editor.allLoaded || collection.count > 0,
   }
 
   return (
@@ -117,16 +147,9 @@ export default function EditorView({ product }) {
           activeTab={activeTab}
           panelOpen={panelOpen}
           onSelectTab={toggleTab}
-          onUpload={startUpload}
-          uploading={uploading}
+          upload={upload}
         />
       </div>
-
-      {modalOpen && (
-        <Suspense fallback={null}>
-          <DetailsModal onConfirm={confirmUpload} onCancel={() => setModalOpen(false)} />
-        </Suspense>
-      )}
 
       <input ref={editor.fileInputRef} type="file" id="file-input" accept="image/*" onChange={editor.onFileInputChange} />
       <Toast toast={toast} />
