@@ -26,6 +26,7 @@ export default function Stage({ editor, gridOn, crossOn }) {
               onActivate={editor.selectFrame}
               onRequestImage={editor.openFilePicker}
               onPan={editor.setFrameOffset}
+              onTransform={editor.setFrameTransform}
             />
           ))}
 
