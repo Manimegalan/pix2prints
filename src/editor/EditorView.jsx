@@ -85,12 +85,9 @@ export default function EditorView({ product }) {
     setBusy(true)
     try {
       collection.addItem(await renderCurrentToItem())
-      editor.clearFrames()
-      setPanelOpen(false)
-      showToast('Added to your collection.', 'success')
+      navigate('/')
     } catch {
       showToast('Couldn’t add that image. Try again.', 'error')
-    } finally {
       setBusy(false)
     }
   }
@@ -101,13 +98,11 @@ export default function EditorView({ product }) {
       setBusy(true)
       try {
         collection.addItem(await renderCurrentToItem())
-        editor.clearFrames()
         total += 1
       } catch {
         showToast('Couldn’t prepare the preview. Try again.', 'error')
-        return
-      } finally {
         setBusy(false)
+        return
       }
     }
     if (total === 0) {
