@@ -1,6 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import CONFIG from '../config.js'
-import { exportSize } from './geometry.js'
 import { useFrameEditor } from './useFrameEditor.js'
 import { useToast } from './useToast.js'
 import TopBar from './components/TopBar.jsx'
@@ -51,11 +50,6 @@ export default function EditorView({ product }) {
     if (geometry.isTwoSided) s += ' · 2 photos'
     return s
   }, [geometry, product])
-
-  const outputLabel = useMemo(() => {
-    const { canvasW, canvasH } = exportSize(geometry, DPI)
-    return `${canvasW} × ${canvasH} px`
-  }, [geometry])
 
   const active = editor.activeState
   const statusLabel = useMemo(() => {
@@ -123,7 +117,6 @@ export default function EditorView({ product }) {
           activeTab={activeTab}
           panelOpen={panelOpen}
           onSelectTab={toggleTab}
-          outputLabel={outputLabel}
           onUpload={startUpload}
           uploading={uploading}
         />

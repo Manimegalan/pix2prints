@@ -136,19 +136,10 @@ export function FlipPanel({ editor }) {
   )
 }
 
-export function UploadPanel({ editor, outputLabel, onUpload, uploading }) {
-  const { loadedCount, geometry, allLoaded } = editor
+export function UploadPanel({ editor, onUpload, uploading }) {
   return (
     <div className="panel active" id="panel-upload">
       <PanelHead title="Upload" resetLabel="Reset all" onReset={editor.resetAll} />
-      <dl className="meta">
-        <dt>Output</dt>
-        <dd>{outputLabel}</dd>
-        <dt>Photos</dt>
-        <dd className={allLoaded ? '' : 'warn'}>
-          {loadedCount} / {geometry.photoCount} loaded
-        </dd>
-      </dl>
       <button className="btn-primary" type="button" onClick={onUpload} disabled={uploading}>
         {uploading ? 'Uploading…' : 'Upload print file'}
       </button>
