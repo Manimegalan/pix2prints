@@ -26,7 +26,17 @@ const PIX2PRINTS = {
     carouselImages: [
       "https://m.media-amazon.com/images/I/61Wk67xls6L._AC_UF894,1000_QL80_.jpg",
       "https://abhishekid.com/cdn/shop/files/Fridge_magnet_showing_both_sides_202608052036.jpg"
-    ]
+    ],
+
+     /* ── Social / contact links used by the catalog footer buttons ─────────
+       whatsappNumber: country code + number, digits only, no "+" or spaces
+       (e.g. "919876543210" for +91 98765 43210). Leave empty to disable the
+       WhatsApp button. whatsappMessage pre-fills the chat text.             */
+    social: {
+      whatsappNumber: "918807950981",
+      whatsappMessage: "Hi Pix2Prints! I have a question.",
+      instagramUrl: "https://www.instagram.com/pix2prints/"
+    }
   },
 
   /* ── Filter buckets, in display order. "all" is prepended automatically. ─ */
